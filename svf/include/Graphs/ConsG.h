@@ -32,6 +32,7 @@
 
 #include "Graphs/ConsGEdge.h"
 #include "Graphs/ConsGNode.h"
+#include "MSSA/SVFGBuilder.h"
 
 namespace SVF
 {
@@ -64,6 +65,7 @@ protected:
     ConstraintEdge::ConstraintEdgeSetTy StoreCGEdgeSet;
 
     void buildCG();
+    void buildSVFG2CG(SVFG* svfg);
 
     void destroy();
 
@@ -98,6 +100,13 @@ public:
     {
         buildCG();
     }
+
+    /// Constructor
+    ConstraintGraph(SVFG* svfg): pag(svfg->getPAG()), edgeIndex(0)
+    {
+        buildSVFG2CG(svfg);
+    }
+
     /// Destructor
     virtual ~ConstraintGraph()
     {

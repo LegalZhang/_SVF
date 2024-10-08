@@ -34,6 +34,8 @@
 #include "WPA/Andersen.h"
 #include "WPA/Steensgaard.h"
 
+#include "WPA/AndersenLCD.h"
+
 using namespace SVF;
 using namespace SVFUtil;
 using namespace std;
@@ -592,6 +594,38 @@ bool Andersen::processStore(NodeID node, const ConstraintEdge* store)
  */
 bool Andersen::processCopy(NodeID node, const ConstraintEdge* edge)
 {
+    /*
+    numOfProcessedCopy++;
+
+    AndersenLCD::ConstraintEdgeSet R;
+    NodeID before = edge->getSrcID();
+    NodeID after = edge->getDstID();
+    auto ptsSrc = Andersen::getDiffPts(before);
+    auto ptsDst = Andersen::getDiffPts(after);
+    if (ptsSrc == ptsDst && R.find(edge) == R.end())
+    {
+        numOfSCCDetection++;
+
+        //double sccStart = stat->getClk();
+        getSCCDetector()->find();
+        //double sccEnd = stat->getClk();
+        //timeOfSCCDetection += (sccEnd - sccStart) / TIMEINTERVAL;
+
+        //double mergeStart = stat->getClk();
+        mergeSccCycle();
+        //double mergeEnd = stat->getClk();
+        //timeOfSCCMerges += (mergeEnd - mergeStart) / TIMEINTERVAL;
+
+        R.insert(edge);
+
+        return true;
+    }
+    NodeID dst = edge->getDstID();
+    if (unionPts(dst, node))
+        pushIntoWorklist(dst);
+    return true;
+    */
+
     numOfProcessedCopy++;
 
     assert((SVFUtil::isa<CopyCGEdge>(edge)) && "not copy/call/ret ??");
@@ -602,6 +636,8 @@ bool Andersen::processCopy(NodeID node, const ConstraintEdge* edge)
     if (changed)
         pushIntoWorklist(dst);
     return changed;
+
+
 }
 
 /*!

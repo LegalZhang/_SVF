@@ -71,6 +71,7 @@ class SVFG : public VFG
     friend class DDASVFGBuilder;
     friend class MTASVFGBuilder;
     friend class RcSvfgBuilder;
+    friend class ConstraintGraph;
 
 public:
     typedef VFGNodeIDToNodeMapTy SVFGNodeIDToNodeMapTy;

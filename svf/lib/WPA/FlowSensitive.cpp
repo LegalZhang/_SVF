@@ -73,6 +73,10 @@ void FlowSensitive::initialize()
 
     setGraph(svfg);
     //AndersenWaveDiff::releaseAndersenWaveDiff();
+
+    consCG = new ConstraintGraph(svfg);
+    if (Options::SVFG2CG())
+        consCG->dump("fsander");
 }
 void FlowSensitive::solveConstraints()
 {

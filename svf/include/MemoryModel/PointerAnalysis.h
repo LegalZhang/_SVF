@@ -64,6 +64,7 @@ public:
         // Whole program analysis
         Andersen_BASE,		///< Base Andersen PTA
         Andersen_WPA,		///< Andersen PTA
+        AndersenLCD_WPA,	///< Andersen Lazy Cycle Detection
         AndersenSCD_WPA,    ///< Selective cycle detection andersen-style WPA
         AndersenSFR_WPA,    ///< Stride-based field representation
         AndersenWaveDiff_WPA,	///< Diff wave propagation andersen-style WPA

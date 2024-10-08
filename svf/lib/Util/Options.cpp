@@ -613,6 +613,12 @@ const Option<bool> Options::ConsCGDotGraph(
     false
 );
 
+const Option<bool> Options::SVFG2CG(
+    "dump-fs",
+    "Dump dot graph of Constraint Graph",
+    false
+);
+
 const Option<bool> Options::BriefConsCGDotGraph(
     "brief-constraint-graph",
     "Dump dot graph of Constraint Graph",
@@ -685,6 +691,7 @@ OptionMultiple<PointerAnalysis::PTATY> Options::PASelected(
     "Select pointer analysis",
 {
     {PointerAnalysis::Andersen_WPA, "nander", "Standard inclusion-based analysis"},
+    {PointerAnalysis::AndersenLCD_WPA, "lcdander", "LCD inclusion-based analysis"},
     {PointerAnalysis::AndersenSCD_WPA, "sander", "Selective cycle detection inclusion-based analysis"},
     {PointerAnalysis::AndersenSFR_WPA, "sfrander", "Stride-based field representation inclusion-based analysis"},
     {PointerAnalysis::AndersenWaveDiff_WPA, "ander", "Diff wave propagation inclusion-based analysis"},

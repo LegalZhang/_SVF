@@ -278,6 +278,9 @@ protected:
     SVFGBuilder memSSA;
     AndersenWaveDiff *ander;
 
+    /// Constraint Graph
+    ConstraintGraph* consCG;
+
     /// Save candidate mappings for evaluation's sake.
     std::vector<std::pair<hclust_fast_methods, std::vector<NodeID>>> candidateMappings;
 

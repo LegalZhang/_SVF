@@ -32,17 +32,17 @@
  *
  */
 
-
-#include "Util/Options.h"
-#include "SVFIR/SVFModule.h"
-#include "MemoryModel/PointerAnalysisImpl.h"
 #include "WPA/WPAPass.h"
+#include "MemoryModel/PointerAnalysisImpl.h"
+#include "SVFIR/SVFModule.h"
+#include "Util/Options.h"
 #include "WPA/Andersen.h"
+#include "WPA/AndersenLCD.h"
 #include "WPA/AndersenPWC.h"
 #include "WPA/FlowSensitive.h"
-#include "WPA/VersionedFlowSensitive.h"
-#include "WPA/TypeAnalysis.h"
 #include "WPA/Steensgaard.h"
+#include "WPA/TypeAnalysis.h"
+#include "WPA/VersionedFlowSensitive.h"
 
 using namespace SVF;
 
@@ -87,6 +87,9 @@ void WPAPass::runPointerAnalysis(SVFIR* pag, u32_t kind)
     {
     case PointerAnalysis::Andersen_WPA:
         _pta = new Andersen(pag);
+        break;
+    case PointerAnalysis::AndersenLCD_WPA:
+        _pta = new AndersenLCD(pag);
         break;
     case PointerAnalysis::AndersenSCD_WPA:
         _pta = new AndersenSCD(pag);
