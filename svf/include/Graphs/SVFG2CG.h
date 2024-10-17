@@ -11,28 +11,23 @@
 #include "Graphs/ConsGNode.h"
 #include "MSSA/SVFGBuilder.h"
 
+namespace SVF
+{
+
 /*!
  * Constraint graph built from SVFG
  */
 
-class  SVFG2CG : public SVF::ConstraintGraph
+class  SVFG2CG : public ConstraintGraph
 {
 public:
-
+    typedef Map<NodeID, NodePair> IDToPairMap;
+    typedef Map<NodePair, NodeID> PairToIDMap;
 
 protected:
-    SVF::SVFG* svfg;
-    NodeToRepMap nodeToRepMap;
-    NodeToSubsMap nodeToSubsMap;
-    WorkList nodesToBeCollapsed;
-    SVF::EdgeID edgeIndex;
-
-    SVF::ConstraintEdge::ConstraintEdgeSetTy AddrCGEdgeSet;
-    SVF::ConstraintEdge::ConstraintEdgeSetTy directEdgeSet;
-    SVF::ConstraintEdge::ConstraintEdgeSetTy LoadCGEdgeSet;
-    SVF::ConstraintEdge::ConstraintEdgeSetTy StoreCGEdgeSet;
-
-    void buildSVFG2CG();
+    SVFG* svfg;
 };
+
+} // End namespace SVF
 
 #endif //SVFG2CG_H
