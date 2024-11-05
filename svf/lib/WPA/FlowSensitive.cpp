@@ -27,12 +27,13 @@
  *      Author: Yulei Sui
  */
 
-#include "Util/Options.h"
-#include "SVFIR/SVFModule.h"
-#include "WPA/WPAStat.h"
 #include "WPA/FlowSensitive.h"
-#include "WPA/Andersen.h"
+#include "Graphs/FSConsG.h"
 #include "MemoryModel/PointsTo.h"
+#include "SVFIR/SVFModule.h"
+#include "Util/Options.h"
+#include "WPA/Andersen.h"
+#include "WPA/WPAStat.h"
 
 using namespace SVF;
 using namespace SVFUtil;
@@ -74,7 +75,7 @@ void FlowSensitive::initialize()
     setGraph(svfg);
     //AndersenWaveDiff::releaseAndersenWaveDiff();
 
-    consCG = new ConstraintGraph(svfg);
+    consCG = new FSConsG(svfg);
     if (Options::SVFG2CG())
         consCG->dump("fsander");
 }

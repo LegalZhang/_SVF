@@ -2,12 +2,10 @@
 // Created by Jiahao Zhang on 19/8/2024.
 //
 
-#include "Graphs/SVFG2CG.h"
+#include "Graphs/FSConsG.h"
 
 #include "Graphs/ConsG.h"
 #include "Graphs/SVFG.h"
-#include "Graphs/VFGNode.h"
-#include "MSSA/SVFGBuilder.h"
 #include "Util/Options.h"
 #include "WPA/Andersen.h"
 #include "WPA/FlowSensitive.h"
@@ -18,7 +16,7 @@ using namespace SVFUtil;
 /*!
  * Start building constraint graph
  */
-void ConstraintGraph::buildSVFG2CG(SVFG* svfg)
+void FSConsG::buildSVFG2CG(SVFG* svfg)
 {
     /// build constraint nodes
     for (auto it : *svfg)
@@ -30,6 +28,7 @@ void ConstraintGraph::buildSVFG2CG(SVFG* svfg)
         {
             if (SVFUtil::isa<AddrVFGNode>(stmtNode))
             {
+                totalCGNode++;
                 auto src = stmtNode->getPAGSrcNode()->getId();
                 auto dst = stmtNode->getPAGDstNode()->getId();
                 if (!hasConstraintNode(src))
@@ -42,20 +41,61 @@ void ConstraintGraph::buildSVFG2CG(SVFG* svfg)
                 }
                 addAddrCGEdge(src, dst);
             }
+
             if (SVFUtil::isa<CopyVFGNode>(stmtNode))
             {
                 auto src = stmtNode->getPAGSrcNode()->getId();
                 auto dst = stmtNode->getPAGDstNode()->getId();
-                if (!hasConstraintNode(src))
+            }
+
+                /*
+                NodeID addFSCGNode(svfgNodeID, pagNodeID)
                 {
-                    addConstraintNode(new ConstraintNode(src), src);
+                    topLevel:
+                    if (hasFSCGNode(getdef, pagNodeID))
+                        return;
+                    totalCGNode++;
+                    addConstraintNode(new ConstraintNode(totalCGNode), totalCGNode);
+                    PairToIDMap[pair] = id;
+                    IDToPairMap[id] = pair;
+                    return totalCGNode;
+
+                    pagIDTosvfgIDMap;
+
+
+
+                    ID(pagID (top) / totalCGNodeID (addr));
+                    Pair<pagID , svfgID >;
+
+                    addrTaken:
+                    if (hasFSCGNode(cgID, svfgID))
+                        return;
+                    totalCGNode++;
+                    addConstraintNode(new ConstraintNode(totalCGNode), totalCGNode);
+                    PairToIDMap[pair] = id;
+                    IDToPairMap[id] = pair;
+                    return totalCGNode;
                 }
-                if (!hasConstraintNode(dst))
+
+                src = addFSCFNode(...);
+                dst = addFSCGNode(..);
+                addCopyCGEdge(src,dst);
+
+                addFSNode
+                totalCGNode++;
+
+                if (!hasConstraintNode(totalCGNode))
                 {
-                    addConstraintNode(new ConstraintNode(dst), dst);
+                    addConstraintNode(new ConstraintNode(totalCGNode), totalCGNode);
+                }
+                totalCGNode++;
+                if (!hasConstraintNode(totalCGNode))
+                {
+                    addConstraintNode(new ConstraintNode(totalCGNode), totalCGNode);
                 }
                 addCopyCGEdge(src, dst);
-            }
+                */
+
             if (SVFUtil::isa<LoadVFGNode>(stmtNode))
             {
                 auto src = stmtNode->getPAGSrcNode()->getId();

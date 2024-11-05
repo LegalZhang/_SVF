@@ -65,7 +65,6 @@ protected:
     ConstraintEdge::ConstraintEdgeSetTy StoreCGEdgeSet;
 
     void buildCG();
-    void buildSVFG2CG(SVFG* svfg);
 
     void destroy();
 
@@ -99,12 +98,6 @@ public:
     ConstraintGraph(SVFIR* p): pag(p), edgeIndex(0)
     {
         buildCG();
-    }
-
-    /// Constructor
-    ConstraintGraph(SVFG* svfg): pag(svfg->getPAG()), edgeIndex(0)
-    {
-        buildSVFG2CG(svfg);
     }
 
     /// Destructor

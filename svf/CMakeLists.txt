@@ -4,8 +4,8 @@ add_library(SvfCore
         include/WPA/AndersenLCD.h
         ../Test-Suite/aliascheck.h
         ../Test-Suite/bug.cpp
-        lib/Graphs/SVFG2CG.cpp
-        include/Graphs/SVFG2CG.h)
+        lib/Graphs/FSConsG.cpp
+        include/Graphs/FSConsG.h)
 
 # Add the public headers as an include directory
 target_include_directories(SvfCore
