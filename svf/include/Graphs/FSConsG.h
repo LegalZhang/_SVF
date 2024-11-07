@@ -9,6 +9,26 @@
 namespace SVF
 {
 
+class FSLoadCGEdge : public LoadCGEdge
+{
+public:
+    /// Constructor
+    FSLoadCGEdge(ConstraintNode* s, ConstraintNode* d, EdgeID id, NodeID fsID) : LoadCGEdge(s, d, id)
+    {
+    }
+
+};
+
+class FSStoreCGEdge : public StoreCGEdge
+{
+public:
+    /// Constructor
+    FSStoreCGEdge(ConstraintNode* s, ConstraintNode* d, EdgeID id, NodeID fsID) : StoreCGEdge(s, d, id)
+    {
+    }
+
+};
+
 /*!
  * Constraint graph built from SVFG
  */
@@ -26,9 +46,16 @@ public:
     typedef Map<NodeID, NodePair> IDToPairMap;
     typedef Map<NodePair, NodeID> PairToIDMap;
 
+    /// Add Flow-sensitive Load edge
+    FSLoadCGEdge* addFSLoadCGEdge(NodeID src, NodeID dst, NodeID fsID);
+    /// Add Flow-sensitive Store edge
+    FSStoreCGEdge* addFSStoreCGEdge(NodeID src, NodeID dst, NodeID fsID);
+
 protected:
     NodeID totalCGNode;
     SVFG* svfg;
+    IDToPairMap idTopairMap;
+    PairToIDMap pairToidMap;
 
     void buildSVFG2CG(SVFG* svfg);
 };
