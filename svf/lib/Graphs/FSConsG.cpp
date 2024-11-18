@@ -183,7 +183,64 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
             {
                 addConstraintNode(new ConstraintNode(node), node);
             }
+            auto i = 0;
+            for (auto iter = fparm->callPEBegin(), eiter = fparm->callPEEnd();
+                 iter != eiter; ++iter, i++)
+            {
+                auto* callPE = *iter;
+                auto callICFGNode = callPE->getCallSite();
+                // auto funEntryICFGNode = callPE->getFunEntryICFGNode();
+                auto src = callICFGNode->getActualParms();
+                auto id = src[i]->getId();
+                addCopyCGEdge(id, node);
+            }
+        }
 
+        if (ActualRetVFGNode* aret = SVFUtil::dyn_cast<ActualRetVFGNode>(node))
+        {
+            auto svfgID = aret->getId();
+            auto node = aret->getRev()->getId();
+            idTopairMap[node] = NodePair(totalCGNode++, svfgID);
+            pairToidMap[NodePair(totalCGNode, svfgID)] = node;
+            if (!hasConstraintNode(node))
+            {
+                addConstraintNode(new ConstraintNode(node), node);
+            }
+        }
+
+        if (FormalRetVFGNode* fret = SVFUtil::dyn_cast<FormalRetVFGNode>(node))
+        {
+            auto svfgID = fret->getId();
+            auto node = fret->getRet()->getId();
+            idTopairMap[node] = NodePair(totalCGNode++, svfgID);
+            pairToidMap[NodePair(totalCGNode, svfgID)] = node;
+            if (!hasConstraintNode(node))
+            {
+                addConstraintNode(new ConstraintNode(node), node);
+            }
+
+            for (auto iter = fret->retPEBegin(), eiter = fret->retPEEnd();
+                 iter != eiter; ++iter)
+            {
+                auto* RetPE = *iter;
+                auto callICFGNode = RetPE->getCallSite();
+                // auto funEntryICFGNode = RetPE->getFunExitICFGNode();
+                auto src = callICFGNode->getRetICFGNode()->getActualRet();
+                auto id = src->getId();
+                addCopyCGEdge(id, node);
+            }
+        }
+
+        if (NullPtrVFGNode* nptr = SVFUtil::dyn_cast<NullPtrVFGNode>(node))
+        {
+            auto svfgID = nptr->getId();
+            auto node = nptr->getPAGNode()->getId();
+            idTopairMap[node] = NodePair(totalCGNode++, svfgID);
+            pairToidMap[NodePair(totalCGNode, svfgID)] = node;
+            if (!hasConstraintNode(node))
+            {
+                addConstraintNode(new ConstraintNode(node), node);
+            }
         }
 
             if (StmtVFGNode* stmtNode = SVFUtil::dyn_cast<StmtVFGNode>(node))
@@ -223,77 +280,6 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
                 totalCGNode++;
                 */
             }
-
-        /// top-level call and ret
-        if (ActualParmVFGNode* aparm =
-                SVFUtil::dyn_cast<ActualParmVFGNode>(node))
-        {
-            auto node = aparm->getParam()->getId();
-            if (!hasConstraintNode(node))
-            {
-                addConstraintNode(new ConstraintNode(node), node);
-            }
-        }
-
-        if (FormalParmVFGNode* fparm =
-                SVFUtil::dyn_cast<FormalParmVFGNode>(node))
-        {
-            auto node = fparm->getParam()->getId();
-            if (!hasConstraintNode(node))
-            {
-                addConstraintNode(new ConstraintNode(node), node);
-            }
-
-            auto i = 0;
-            for (auto iter = fparm->callPEBegin(), eiter = fparm->callPEEnd();
-                 iter != eiter; ++iter, i++)
-            {
-                auto* callPE = *iter;
-                auto callICFGNode = callPE->getCallSite();
-                // auto funEntryICFGNode = callPE->getFunEntryICFGNode();
-                auto src = callICFGNode->getActualParms();
-                auto id = src[i]->getId();
-                addCopyCGEdge(id, node);
-            }
-        }
-
-        if (ActualRetVFGNode* aret = SVFUtil::dyn_cast<ActualRetVFGNode>(node))
-        {
-            auto node = aret->getRev()->getId();
-            if (!hasConstraintNode(node))
-            {
-                addConstraintNode(new ConstraintNode(node), node);
-            }
-        }
-
-        if (FormalRetVFGNode* fret = SVFUtil::dyn_cast<FormalRetVFGNode>(node))
-        {
-            auto node = fret->getRet()->getId();
-            if (!hasConstraintNode(node))
-            {
-                addConstraintNode(new ConstraintNode(node), node);
-            }
-
-            for (auto iter = fret->retPEBegin(), eiter = fret->retPEEnd();
-                 iter != eiter; ++iter)
-            {
-                auto* RetPE = *iter;
-                auto callICFGNode = RetPE->getCallSite();
-                // auto funEntryICFGNode = RetPE->getFunExitICFGNode();
-                auto src = callICFGNode->getRetICFGNode()->getActualRet();
-                auto id = src->getId();
-                addCopyCGEdge(id, node);
-            }
-        }
-
-        if (NullPtrVFGNode* nptr = SVFUtil::dyn_cast<NullPtrVFGNode>(node))
-        {
-            auto node = nptr->getPAGNode()->getId();
-            if (!hasConstraintNode(node))
-            {
-                addConstraintNode(new ConstraintNode(node), node);
-            }
-        }
 
         /// address-taken call and ret
         if (MSSAPHISVFGNode* mphiNode =
@@ -379,7 +365,7 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
 }
 
 /*!
- * Add Flow-sensitive Load edge
+ * Add flow-sensitive load edge
  */
 FSLoadCGEdge* FSConsG::addFSLoadCGEdge(NodeID src, NodeID dst, NodeID fsID)
 {
@@ -400,7 +386,7 @@ FSLoadCGEdge* FSConsG::addFSLoadCGEdge(NodeID src, NodeID dst, NodeID fsID)
 }
 
 /*!
- * Add Flow-sensitive Store edge
+ * Add flow-sensitive store edge
  */
 FSStoreCGEdge* FSConsG::addFSStoreCGEdge(NodeID src, NodeID dst, NodeID fsID)
 {
