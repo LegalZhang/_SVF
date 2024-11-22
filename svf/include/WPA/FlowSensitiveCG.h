@@ -8,12 +8,13 @@
 namespace SVF
 {
 
-class FlowsensiveCG : public Andersen
+class FlowsensitiveCG : public Andersen
 {
 public:
 
 protected:
     virtual void handleLoadStore(ConstraintNode* node);
+    virtual bool processStore(NodeID node, const ConstraintEdge* store);
 };
 
 } // namespace SVF
