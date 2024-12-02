@@ -77,7 +77,7 @@ void FlowSensitive::initialize()
 
     consCG = new FSConsG(svfg);
     if (Options::SVFG2CG())
-        consCG->dump("fsander");
+        consCG->dump("fsconsg");
 }
 void FlowSensitive::solveConstraints()
 {

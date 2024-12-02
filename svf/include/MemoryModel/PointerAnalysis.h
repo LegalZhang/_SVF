@@ -68,6 +68,7 @@ public:
         AndersenSCD_WPA,    ///< Selective cycle detection andersen-style WPA
         AndersenSFR_WPA,    ///< Stride-based field representation
         AndersenWaveDiff_WPA,	///< Diff wave propagation andersen-style WPA
+        AndersenFS_WPA,    ///< Flow-sensitive Andersen WPA
         Steensgaard_WPA,      ///< Steensgaard PTA
         CSCallString_WPA,	///< Call string based context sensitive WPA
         CSSummary_WPA,		///< Summary based context sensitive WPA

@@ -5,16 +5,35 @@
 #ifndef FLOWSENSITIVECG_H
 #define FLOWSENSITIVECG_H
 
+#include "Graphs/FSConsG.h"
+
 namespace SVF
 {
 
-class FlowsensitiveCG : public Andersen
+class FlowSensitiveCG : public Andersen
 {
 public:
+    /// Constructor
+    FlowSensitiveCG(SVFIR* _pag, PTATY type = AndersenFS_WPA, bool alias_check = false) : Andersen(_pag, type) {}
+
+    /// Initialize analysis
+    virtual void initialize() override;
+    /// Finalize analysis
+    virtual void finalize() override;
 
 protected:
-    virtual void handleLoadStore(ConstraintNode* node);
-    virtual bool processStore(NodeID node, const ConstraintEdge* store);
+    virtual void solveWorklist() override;
+    virtual void postProcessNode(NodeID nodeId);
+    virtual bool handleStore(NodeID node, const ConstraintEdge* store);
+    virtual bool handleLoad(NodeID node, const ConstraintEdge* load);
+
+    NodeID getAddrDef(NodeID consgid, NodeID svfgid);
+    bool isStrongUpdate(const StoreCGEdge* store, NodeID& singleton);
+
+    SVFGBuilder memSSA;
+    AndersenWaveDiff *ander;
+    SVFG* svfg;
+    FSConsG* fsconsCG;
 };
 
 } // namespace SVF

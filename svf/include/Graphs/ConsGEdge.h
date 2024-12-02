@@ -179,9 +179,17 @@ public:
     //@}
 
     /// constructor
-    StoreCGEdge(ConstraintNode* s, ConstraintNode* d, EdgeID id) : ConstraintEdge(s,d,Store,id)
+    StoreCGEdge(ConstraintNode* s, ConstraintNode* d, EdgeID id, NodeID fsid = 0) : ConstraintEdge(s,d,Store,id), svfgid(fsid)
     {
     }
+
+    /// Getter for fsID
+    NodeID getSVFGID() const {
+        return svfgid;
+    }
+
+private:
+    NodeID svfgid;
 };
 
 
@@ -213,9 +221,17 @@ public:
     //@}
 
     /// Constructor
-    LoadCGEdge(ConstraintNode* s, ConstraintNode* d, EdgeID id) : ConstraintEdge(s,d,Load,id)
+    LoadCGEdge(ConstraintNode* s, ConstraintNode* d, EdgeID id, NodeID fsid = 0) : ConstraintEdge(s,d,Load,id), svfgid(fsid)
     {
     }
+
+    /// Getter for fsID
+    NodeID getSVFGID() const {
+        return svfgid;
+    }
+
+private:
+    NodeID svfgid;
 };
 
 

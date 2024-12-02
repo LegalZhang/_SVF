@@ -614,8 +614,8 @@ const Option<bool> Options::ConsCGDotGraph(
 );
 
 const Option<bool> Options::SVFG2CG(
-    "dump-fs",
-    "Dump dot graph of Constraint Graph",
+    "dump-fs-consg",
+    "Dump dot graph of Flow-Sensitive Constraint Graph",
     false
 );
 
@@ -695,6 +695,7 @@ OptionMultiple<PointerAnalysis::PTATY> Options::PASelected(
     {PointerAnalysis::AndersenSCD_WPA, "sander", "Selective cycle detection inclusion-based analysis"},
     {PointerAnalysis::AndersenSFR_WPA, "sfrander", "Stride-based field representation inclusion-based analysis"},
     {PointerAnalysis::AndersenWaveDiff_WPA, "ander", "Diff wave propagation inclusion-based analysis"},
+    {PointerAnalysis::AndersenFS_WPA, "fsander", "Flow-sensitive inclusion-based analysis"},
     {PointerAnalysis::Steensgaard_WPA, "steens", "Steensgaard's pointer analysis"},
     // Disabled till further work is done.
     {PointerAnalysis::FSSPARSE_WPA, "fspta", "Sparse flow sensitive pointer analysis"},

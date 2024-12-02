@@ -2,6 +2,8 @@
 // Created by Jiahao Zhang on 19/8/2024.
 //
 
+#ifndef FSCONSG_H
+#define FSCONSG_H
 
 #include "ConsG.h"
 #include "SVFG.h"
@@ -9,13 +11,22 @@
 namespace SVF
 {
 
+/*
 class FSLoadCGEdge : public LoadCGEdge
 {
 public:
     /// Constructor
-    FSLoadCGEdge(ConstraintNode* s, ConstraintNode* d, EdgeID id, NodeID fsID) : LoadCGEdge(s, d, id)
+    FSLoadCGEdge(ConstraintNode* s, ConstraintNode* d, EdgeID id, NodeID fsID) : LoadCGEdge(s, d, id), fsID_(fsID)
     {
     }
+
+    /// Getter for fsID
+    NodeID getSVFGID() const {
+        return fsID_;
+    }
+
+private:
+    NodeID fsID_;
 
 };
 
@@ -23,11 +34,20 @@ class FSStoreCGEdge : public StoreCGEdge
 {
 public:
     /// Constructor
-    FSStoreCGEdge(ConstraintNode* s, ConstraintNode* d, EdgeID id, NodeID fsID) : StoreCGEdge(s, d, id)
+    FSStoreCGEdge(ConstraintNode* s, ConstraintNode* d, EdgeID id, NodeID fsID) : StoreCGEdge(s, d, id), fsID_(fsID)
     {
     }
 
+    /// Getter for fsID
+    NodeID getSVFGID() const {
+        return fsID_;
+    }
+
+private:
+    NodeID fsID_;
+
 };
+*/
 
 /*!
  * Constraint graph built from SVFG
@@ -35,6 +55,8 @@ public:
 
 class  FSConsG : public ConstraintGraph
 {
+    friend class FlowSensitiveCG;
+
 public:
     /// Constructor
     FSConsG(SVFG* svfg): ConstraintGraph(svfg->getPAG())
@@ -46,14 +68,9 @@ public:
     typedef Map<NodeID, NodePair> IDToPairMap;
     typedef Map<NodePair, NodeID> PairToIDMap;
 
-    /// Add Flow-sensitive Load edge
-    FSLoadCGEdge* addFSLoadCGEdge(NodeID src, NodeID dst, NodeID fsID);
-    /// Add Flow-sensitive Store edge
-    FSStoreCGEdge* addFSStoreCGEdge(NodeID src, NodeID dst, NodeID fsID);
-
 protected:
     NodeID totalCGNode;
-    SVFG* svfg;
+    // SVFG* svfg;
     IDToPairMap idTopairMap;
     PairToIDMap pairToidMap;
 
@@ -61,3 +78,5 @@ protected:
 };
 
 } // End namespace SVF
+
+#endif // FSCONSG_H

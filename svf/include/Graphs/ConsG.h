@@ -187,9 +187,9 @@ public:
     NormalGepCGEdge* addNormalGepCGEdge(NodeID src, NodeID dst, const AccessPath& ap);
     VariantGepCGEdge* addVariantGepCGEdge(NodeID src, NodeID dst);
     /// Add Load edge
-    LoadCGEdge* addLoadCGEdge(NodeID src, NodeID dst);
+    LoadCGEdge* addLoadCGEdge(NodeID src, NodeID dst, NodeID fsID);
     /// Add Store edge
-    StoreCGEdge* addStoreCGEdge(NodeID src, NodeID dst);
+    StoreCGEdge* addStoreCGEdge(NodeID src, NodeID dst, NodeID fsID);
     //@}
 
     ///Get SVFIR edge
