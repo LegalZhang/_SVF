@@ -16,6 +16,19 @@ public:
     /// Constructor
     FlowSensitiveCG(SVFIR* _pag, PTATY type = AndersenFS_WPA, bool alias_check = false) : Andersen(_pag, type) {}
 
+    ~FlowSensitiveCG()
+    {
+        std::cerr << "Destroying FlowSensitiveCG..." << std::endl;
+        if (fsconsCG) {
+            delete fsconsCG;
+            fsconsCG = nullptr;
+        }
+        if (svfg) {
+            delete svfg;
+            svfg = nullptr;
+        }
+    }
+
     /// Initialize analysis
     virtual void initialize() override;
     /// Finalize analysis
@@ -23,6 +36,7 @@ public:
 
 protected:
     virtual void solveWorklist() override;
+    virtual void processNode(NodeID nodeId) override;
     virtual void postProcessNode(NodeID nodeId);
     virtual bool handleStore(NodeID node, const ConstraintEdge* store);
     virtual bool handleLoad(NodeID node, const ConstraintEdge* load);

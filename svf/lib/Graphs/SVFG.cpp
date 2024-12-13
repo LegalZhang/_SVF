@@ -476,6 +476,7 @@ SVFGEdge* SVFG::addIntraIndirectVFEdge(NodeID srcId, NodeID dstId, const NodeBS&
     {
         IntraIndSVFGEdge* indirectEdge = new IntraIndSVFGEdge(srcNode,dstNode);
         indirectEdge->addPointsTo(cpts);
+        indirectEdgeSet.insert(indirectEdge);
         return (addSVFGEdge(indirectEdge) ? indirectEdge : nullptr);
     }
 }

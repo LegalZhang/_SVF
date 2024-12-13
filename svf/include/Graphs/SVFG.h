@@ -72,6 +72,7 @@ class SVFG : public VFG
     friend class MTASVFGBuilder;
     friend class RcSvfgBuilder;
     friend class ConstraintGraph;
+    friend class FSConsG;
 
 public:
     typedef VFGNodeIDToNodeMapTy SVFGNodeIDToNodeMapTy;
@@ -106,6 +107,7 @@ protected:
     SVFGStat * stat;
     std::unique_ptr<MemSSA> mssa;
     PointerAnalysis* pta;
+    Set<IndirectSVFGEdge*> indirectEdgeSet;
 
     /// Clean up memory
     void destroy();

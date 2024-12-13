@@ -9,6 +9,8 @@
 
 using namespace SVF;
 
+constexpr NodeID INVALID_NODE_ID = -1;
+
 /*!
  * Initialize analysis
  */
@@ -24,6 +26,10 @@ void FlowSensitiveCG::initialize()
 
     /// Build Flow-Sensitive Constraint Graph
     fsconsCG = new FSConsG(svfg);
+    if (!fsconsCG) {
+        std::cerr << "Error: Failed to initialize fsconsCG!" << std::endl;
+        return;
+    }
     setGraph(fsconsCG);
     if (Options::SVFG2CG())
         fsconsCG->dump("fsconsg_initial");
@@ -36,6 +42,14 @@ void FlowSensitiveCG::finalize()
 {
     if (Options::SVFG2CG())
         fsconsCG->dump("fsconsg_final");
+
+    // Debug: Check fsconsCG and svfg before cleanup
+    if (!fsconsCG) {
+        std::cerr << "Error: fsconsCG is null in finalize!" << std::endl;
+    }
+    if (!svfg) {
+        std::cerr << "Error: svfg is null in finalize!" << std::endl;
+    }
 
     BVDataPTAImpl::finalize();
 }
@@ -54,19 +68,68 @@ void FlowSensitiveCG::solveWorklist()
     {
         NodeID nodeId = nodeStack.top();
         nodeStack.pop();
+
+        // Debug check for invalid node IDs
+        if (nodeId == INVALID_NODE_ID) {
+            std::cerr << "Error: Invalid NodeID found in nodeStack!\n";
+            continue;
+        }
+
+        // Debug log for processing a node
+        std::cerr << "Processing NodeID: " << nodeId << std::endl;
+
         collapsePWCNode(nodeId);
-        // process nodes in nodeStack
+
+        // Debug: Ensure collapsePWCNode didn't corrupt state
+        if (!consCG->getConstraintNode(nodeId)) {
+            std::cerr << "Error: NodeID " << nodeId << " is invalid after collapsePWCNode!\n";
+            continue;
+        }
+
         processNode(nodeId);
         collapseFields();
+
+        // Debug: Verify graph consistency after node processing
+        std::cerr << "Finished processing NodeID: " << nodeId << std::endl;
     }
 
     // New nodes will be inserted into workList during processing.
     while (!isWorklistEmpty())
     {
         NodeID nodeId = popFromWorklist();
+
+        // Debug check for invalid worklist node IDs
+        if (nodeId == INVALID_NODE_ID) {
+            std::cerr << "Error: Invalid NodeID found in workList!\n";
+            continue;
+        }
+
+        std::cerr << "Post-processing NodeID: " << nodeId << std::endl;
+
         // process nodes in worklist
         postProcessNode(nodeId);
+
+        // Debug: Verify state after post-processing
+        std::cerr << "Finished post-processing NodeID: " << nodeId << std::endl;
     }
+}
+
+
+/*!
+ * Process edge PAGNode
+ */
+void FlowSensitiveCG::processNode(NodeID nodeId)
+{
+    // This node may be merged during collapseNodePts() which means it is no longer a rep node
+    // in the graph. Only rep node needs to be handled.
+    if (sccRepNode(nodeId) != nodeId)
+        return;
+
+    double propStart = stat->getClk();
+    ConstraintNode* node = consCG->getConstraintNode(nodeId);
+    handleCopyGep(node);
+    double propEnd = stat->getClk();
+    timeOfProcessCopyGep += (propEnd - propStart) / TIMEINTERVAL;
 }
 
 /*!
@@ -77,6 +140,11 @@ void FlowSensitiveCG::postProcessNode(NodeID nodeId)
     double insertStart = stat->getClk();
 
     ConstraintNode* node = consCG->getConstraintNode(nodeId);
+
+    if (!node) {
+        std::cerr << "Error: ConstraintNode is null for NodeID: " << nodeId << std::endl;
+        return;
+    }
 
     // handle load
     for (ConstraintNode::const_iterator it = node->outgoingLoadsBegin(), eit = node->outgoingLoadsEnd();
@@ -185,8 +253,14 @@ bool FlowSensitiveCG::handleLoad(NodeID node, const ConstraintEdge* load)
 
 NodeID FlowSensitiveCG::getAddrDef(NodeID consgid, NodeID svfgid)
 {
-    return fsconsCG->pairToidMap[NodePair(consgid, svfgid)];
+    auto it = fsconsCG->pairToidMap.find(NodePair(consgid, svfgid));
+    if (it == fsconsCG->pairToidMap.end()) {
+        std::cerr << "Error: NodePair(" << consgid << ", " << svfgid << ") not found in pairToidMap!" << std::endl;
+        return INVALID_NODE_ID;
+    }
+    return it->second;
 }
+
 
 bool FlowSensitiveCG::isStrongUpdate(const StoreCGEdge* node, NodeID& singleton)
 {
