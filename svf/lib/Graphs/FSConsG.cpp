@@ -18,6 +18,8 @@ using namespace SVFUtil;
  */
 void FSConsG::buildSVFG2CG(SVFG* svfg)
 {
+    totalCGNode = SVFIR::getPAG()->getTotalNodeNum();
+
     /// build top-level constraint nodes
     for (auto it : *svfg)
     {
@@ -29,7 +31,6 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
             auto src = addrNode->getPAGSrcNode()->getId();
             if (!hasConstraintNode(src))
             {
-                totalCGNode++;
                 idTopairMap[src] = NodePair(src, svfgID);
                 pairToidMap[NodePair(src, svfgID)] = src;
                 addConstraintNode(new ConstraintNode(src), src);
@@ -37,7 +38,6 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
             NodeID dst = addrNode->getPAGDstNode()->getId();
             if (!hasConstraintNode(dst))
             {
-                totalCGNode++;
                 idTopairMap[dst] = NodePair(dst, svfgID);
                 pairToidMap[NodePair(dst, svfgID)] = dst;
                 addConstraintNode(new ConstraintNode(dst), dst);
@@ -51,7 +51,6 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
             auto src = copyNode->getPAGSrcNode()->getId();
             if (!hasConstraintNode(src))
             {
-                totalCGNode++;
                 idTopairMap[src] = NodePair(src, svfgID);
                 pairToidMap[NodePair(src, svfgID)] = src;
                 addConstraintNode(new ConstraintNode(src), src);
@@ -59,7 +58,6 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
             NodeID dst = copyNode->getPAGDstNode()->getId();
             if (!hasConstraintNode(dst))
             {
-                totalCGNode++;
                 idTopairMap[dst] = NodePair(dst, svfgID);
                 pairToidMap[NodePair(dst, svfgID)] = dst;
                 addConstraintNode(new ConstraintNode(dst), dst);
@@ -73,7 +71,6 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
             auto src = loadNode->getPAGSrcNode()->getId();
             if (!hasConstraintNode(src))
             {
-                totalCGNode++;
                 idTopairMap[src] = NodePair(src, svfgID);
                 pairToidMap[NodePair(src, svfgID)] = src;
                 addConstraintNode(new ConstraintNode(src), src);
@@ -81,7 +78,6 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
             NodeID dst = loadNode->getPAGDstNode()->getId();
             if (!hasConstraintNode(dst))
             {
-                totalCGNode++;
                 idTopairMap[dst] = NodePair(dst, svfgID);
                 pairToidMap[NodePair(dst, svfgID)] = dst;
                 addConstraintNode(new ConstraintNode(dst), dst);
@@ -95,7 +91,6 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
             auto src = storeNode->getPAGSrcNode()->getId();
             if (!hasConstraintNode(src))
             {
-                totalCGNode++;
                 idTopairMap[src] = NodePair(src, svfgID);
                 pairToidMap[NodePair(src, svfgID)] = src;
                 addConstraintNode(new ConstraintNode(src), src);
@@ -103,7 +98,6 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
             NodeID dst = storeNode->getPAGDstNode()->getId();
             if (!hasConstraintNode(dst))
             {
-                totalCGNode++;
                 idTopairMap[dst] = NodePair(dst, svfgID);
                 pairToidMap[NodePair(dst, svfgID)] = dst;
                 addConstraintNode(new ConstraintNode(dst), dst);
@@ -117,7 +111,6 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
             auto src = gepNode->getPAGSrcNode()->getId();
             if (!hasConstraintNode(src))
             {
-                totalCGNode++;
                 idTopairMap[src] = NodePair(src, svfgID);
                 pairToidMap[NodePair(src, svfgID)] = src;
                 addConstraintNode(new ConstraintNode(src), src);
@@ -125,7 +118,6 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
             NodeID dst = gepNode->getPAGDstNode()->getId();
             if (!hasConstraintNode(dst))
             {
-                totalCGNode++;
                 idTopairMap[dst] = NodePair(dst, svfgID);
                 pairToidMap[NodePair(dst, svfgID)] = dst;
                 addConstraintNode(new ConstraintNode(dst), dst);
@@ -148,7 +140,6 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
             auto dst = phiNode->getRes()->getId();
             if (!hasConstraintNode(dst))
             {
-                totalCGNode++;
                 idTopairMap[dst] = NodePair(dst, svfgID);
                 pairToidMap[NodePair(dst, svfgID)] = dst;
                 addConstraintNode(new ConstraintNode(dst), dst);
@@ -161,7 +152,6 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
                 auto src = iter->second->getId();
                 if (!hasConstraintNode(src))
                 {
-                    totalCGNode++;
                     idTopairMap[src] = NodePair(src, svfgID);
                     pairToidMap[NodePair(src, svfgID)] = src;
                     addConstraintNode(new ConstraintNode(src), src);
@@ -178,7 +168,6 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
             auto node = aparm->getParam()->getId();
             if (!hasConstraintNode(node))
             {
-                totalCGNode++;
                 idTopairMap[node] = NodePair(node, svfgID);
                 pairToidMap[NodePair(node, svfgID)] = node;
                 addConstraintNode(new ConstraintNode(node), node);
@@ -192,7 +181,6 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
             auto node = fparm->getParam()->getId();
             if (!hasConstraintNode(node))
             {
-                totalCGNode++;
                 idTopairMap[node] = NodePair(node, svfgID);
                 pairToidMap[NodePair(node, svfgID)] = node;
                 addConstraintNode(new ConstraintNode(node), node);
@@ -216,7 +204,6 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
             auto node = aret->getRev()->getId();
             if (!hasConstraintNode(node))
             {
-                totalCGNode++;
                 idTopairMap[node] = NodePair(node, svfgID);
                 pairToidMap[NodePair(node, svfgID)] = node;
                 addConstraintNode(new ConstraintNode(node), node);
@@ -229,7 +216,6 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
             auto node = fret->getRet()->getId();
             if (!hasConstraintNode(node))
             {
-                totalCGNode++;
                 idTopairMap[node] = NodePair(node, svfgID);
                 pairToidMap[NodePair(node, svfgID)] = node;
                 addConstraintNode(new ConstraintNode(node), node);
@@ -253,7 +239,6 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
             auto node = nptr->getPAGNode()->getId();
             if (!hasConstraintNode(node))
             {
-                totalCGNode++;
                 idTopairMap[node] = NodePair(node, svfgID);
                 pairToidMap[NodePair(node, svfgID)] = node;
                 addConstraintNode(new ConstraintNode(node), node);
@@ -262,12 +247,12 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
 
         /// address-taken phi
         if (MSSAPHISVFGNode* mphiNode =
-        SVFUtil::dyn_cast<MSSAPHISVFGNode>(node))
+                SVFUtil::dyn_cast<MSSAPHISVFGNode>(node))
         {
             totalCGNode++;
             auto svfgID = mphiNode->getId();
             auto fdst = mphiNode->getResVer()->getID();
-            auto dst = totalCGNode;
+            NodeID dst = totalCGNode;
             if (!hasConstraintNode(dst))
             {
                 idTopairMap[dst] = NodePair(fdst, svfgID);
@@ -280,7 +265,7 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
             {
                 totalCGNode++;
                 auto fsrc = iter->first;
-                auto src = totalCGNode;
+                NodeID src = totalCGNode;
                 if (!hasConstraintNode(src))
                 {
                     idTopairMap[src] = NodePair(fsrc, svfgID);
@@ -380,7 +365,8 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
                 {
                     idTopairMap[totalCGNode] = NodePair(i, svfgID);
                     pairToidMap[NodePair(i, svfgID)] = totalCGNode;
-                    addConstraintNode(new ConstraintNode(totalCGNode), totalCGNode);
+                    addConstraintNode(new ConstraintNode(totalCGNode),
+    totalCGNode);
                     // addAddrCGEdge(totalCGNode, i);
                 }
             }
@@ -398,7 +384,8 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
                 {
                     idTopairMap[totalCGNode] = NodePair(i, svfgID);
                     pairToidMap[NodePair(i, svfgID)] = totalCGNode;
-                    addConstraintNode(new ConstraintNode(totalCGNode), totalCGNode);
+                    addConstraintNode(new ConstraintNode(totalCGNode),
+    totalCGNode);
                     // addAddrCGEdge(totalCGNode, i);
                 }
             }
@@ -417,7 +404,8 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
                 {
                     idTopairMap[totalCGNode] = NodePair(i, svfgID);
                     pairToidMap[NodePair(i, svfgID)] = totalCGNode;
-                    addConstraintNode(new ConstraintNode(totalCGNode), totalCGNode);
+                    addConstraintNode(new ConstraintNode(totalCGNode),
+    totalCGNode);
                     // addAddrCGEdge(totalCGNode, i);
                 }
             }
@@ -436,7 +424,8 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
                 {
                     idTopairMap[totalCGNode] = NodePair(i, svfgID);
                     pairToidMap[NodePair(i, svfgID)] = totalCGNode;
-                    addConstraintNode(new ConstraintNode(totalCGNode), totalCGNode);
+                    addConstraintNode(new ConstraintNode(totalCGNode),
+    totalCGNode);
                     // addAddrCGEdge(totalCGNode, i);
                 }
             }
@@ -487,49 +476,33 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
         auto dstIndirect = edge->getDstID(); // DstSVFGID
         for (NodeID i : edge->getPointsTo())
         {
-            totalCGNode++;
-            auto src = totalCGNode;
-            auto srcsvfgID = srcIndirect;
-            idTopairMap[src] = NodePair(i, srcsvfgID);
-            pairToidMap[NodePair(i, srcsvfgID)] = src;
-            SVFGNode* srcNodeType = svfg->getSVFGNode(srcsvfgID);
-            if (SVFUtil::dyn_cast<StoreSVFGNode>(srcNodeType))
+            if (!hasConstraintNodePair(i, srcIndirect))
             {
-                addConstraintNode(new ConstraintNode(src), src);
-                //initialPts(src);
-            }
-            else if (SVFUtil::dyn_cast<LoadSVFGNode>(srcNodeType))
-            {
-                addConstraintNode(new ConstraintNode(src), src);
-                //addCopyCGEdge(edge.getPrevious(), src);
-            }
-            else
-            {
+                totalCGNode++;
+                NodeID src = totalCGNode;
+                auto srcsvfgID = srcIndirect;
+                pairToidMap[NodePair(i, srcsvfgID)] = src;
+                idTopairMap[src] = NodePair(i, srcsvfgID);
+                // SVFGNode* srcNodeType = svfg->getSVFGNode(srcsvfgID);
+                // initialPts(src);
                 addConstraintNode(new ConstraintNode(src), src);
             }
 
-            totalCGNode++;
-            auto dst = totalCGNode;
-            auto dstsvfgID = dstIndirect;
-            idTopairMap[dst] = NodePair(i, dstsvfgID);
-            pairToidMap[NodePair(i, dstsvfgID)] = dst;
-            SVFGNode* dstNodeType = svfg->getSVFGNode(dstsvfgID);
-            if (SVFUtil::isa<StoreSVFGNode>(dstNodeType))
+            if (!hasConstraintNodePair(i, dstIndirect))
             {
-                addConstraintNode(new ConstraintNode(dst), dst);
-                //initialPts(dst);
-            }
-            else if (SVFUtil::isa<LoadSVFGNode>(dstNodeType))
-            {
-                addConstraintNode(new ConstraintNode(dst), dst);
-                //addCopyCGEdge(edge.getPrevious(), dst);
-            }
-            else
-            {
+                totalCGNode++;
+                NodeID dst = totalCGNode;
+                auto dstsvfgID = dstIndirect;
+                pairToidMap[NodePair(i, dstsvfgID)] = dst;
+                idTopairMap[dst] = NodePair(i, dstsvfgID);
+                // SVFGNode* dstNodeType = svfg->getSVFGNode(dstsvfgID);
+                // initialPts(src);
                 addConstraintNode(new ConstraintNode(dst), dst);
             }
 
-            //addCopyCGEdge(src, dst);
+            NodeID srcNode = pairToidMap[NodePair(i, srcIndirect)];
+            NodeID dstNode = pairToidMap[NodePair(i, dstIndirect)];
+            addCopyCGEdge(srcNode, dstNode);
         }
     }
 }

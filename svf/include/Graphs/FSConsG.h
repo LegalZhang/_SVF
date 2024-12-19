@@ -65,11 +65,17 @@ public:
         buildSVFG2CG(svfg);
     }
 
+    inline bool hasConstraintNodePair(const NodeID& pagid, const NodeID& svfgid) const
+    {
+        NodePair nodePair(pagid, svfgid);
+        return pairToidMap.find(nodePair) != pairToidMap.end();
+    }
+
     typedef Map<NodeID, NodePair> IDToPairMap;
     typedef Map<NodePair, NodeID> PairToIDMap;
 
 protected:
-    NodeID totalCGNode;
+    u32_t totalCGNode;
     // SVFG* svfg;
     IDToPairMap idTopairMap;
     PairToIDMap pairToidMap;

@@ -81,7 +81,7 @@ void FlowSensitiveCG::solveWorklist()
         collapsePWCNode(nodeId);
 
         // Debug: Ensure collapsePWCNode didn't corrupt state
-        if (!consCG->getConstraintNode(nodeId)) {
+        if (!fsconsCG->getConstraintNode(nodeId)) {
             std::cerr << "Error: NodeID " << nodeId << " is invalid after collapsePWCNode!\n";
             continue;
         }
@@ -126,7 +126,7 @@ void FlowSensitiveCG::processNode(NodeID nodeId)
         return;
 
     double propStart = stat->getClk();
-    ConstraintNode* node = consCG->getConstraintNode(nodeId);
+    ConstraintNode* node = fsconsCG->getConstraintNode(nodeId);
     handleCopyGep(node);
     double propEnd = stat->getClk();
     timeOfProcessCopyGep += (propEnd - propStart) / TIMEINTERVAL;
@@ -139,7 +139,7 @@ void FlowSensitiveCG::postProcessNode(NodeID nodeId)
 {
     double insertStart = stat->getClk();
 
-    ConstraintNode* node = consCG->getConstraintNode(nodeId);
+    ConstraintNode* node = fsconsCG->getConstraintNode(nodeId);
 
     if (!node) {
         std::cerr << "Error: ConstraintNode is null for NodeID: " << nodeId << std::endl;
