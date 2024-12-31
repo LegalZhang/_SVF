@@ -276,7 +276,8 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
             }
         }
 
-        /* pseudocode of transforming address-taken nodes
+        /*
+            /// pseudocode of transforming address-taken nodes
             if (StmtVFGNode* stmtNode = SVFUtil::dyn_cast<StmtVFGNode>(node))
             {
                 NodeID addFSCGNode(svfgNodeID, pagNodeID)
@@ -469,6 +470,7 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
 
      */
 
+
     /// connect indirect constraint edges
     for (IndirectSVFGEdge* edge : svfg->indirectEdgeSet)
     {
@@ -502,9 +504,12 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
 
             NodeID srcNode = pairToidMap[NodePair(i, srcIndirect)];
             NodeID dstNode = pairToidMap[NodePair(i, dstIndirect)];
+            srcNode = dstNode;
+            dstNode = srcNode;
             addCopyCGEdge(srcNode, dstNode);
         }
     }
+
 }
 
 /* Flow-Sensitive LoadCGEdge and StoreCGEdge

@@ -16,6 +16,8 @@ constexpr NodeID INVALID_NODE_ID = -1;
  */
 void FlowSensitiveCG::initialize()
 {
+    resetData();
+    /// Build SVFIR
     PointerAnalysis::initialize();
 
     /// Create Andersen statistic class
@@ -33,6 +35,11 @@ void FlowSensitiveCG::initialize()
     setGraph(fsconsCG);
     if (Options::SVFG2CG())
         fsconsCG->dump("fsconsg_initial");
+
+    /// Initialize worklist
+    processAllAddr();
+
+    setDetectPWC(true);   // Standard wave propagation always collapses PWCs
 }
 
 /*!
@@ -200,6 +207,20 @@ void FlowsensitiveCG::handleLoadStore(ConstraintNode* node)
 
 bool FlowSensitiveCG::handleStore(NodeID node, const ConstraintEdge* store)
 {
+    bool changed = false;
+    for (PointsTo::iterator piter = getPts(node).begin(), epiter = getPts(node).end();
+            piter != epiter; ++piter)
+    {
+        if (processStore(*piter, store))
+        {
+            changed = true;
+        }
+    }
+    return changed;
+}
+
+bool FlowSensitiveCG::processStore(NodeID node, const ConstraintEdge* store)
+{
     if (pag->isConstantObj(node) || pag->getGNode(store->getSrcID())->isPointer() == false)
         return false;
 
@@ -214,25 +235,37 @@ bool FlowSensitiveCG::handleStore(NodeID node, const ConstraintEdge* store)
     // add ConstraintNode
     // addConstraintNode(new ConstraintNode(dst), dst);
 
-    bool changed = false;
     NodeID singleton;
     bool isSU = isStrongUpdate(fsStoreEdge, singleton);
     if (isSU)
     {
         clearFullPts(dst);
-        unionPts(dst, src);
-        changed = addCopyEdge(src, dst);
+        // unionPts(dst, src);
+        return addCopyEdge(src, dst);
     }
     else
     {
-        unionPts(dst, src);
-        changed = addCopyEdge(src, dst);
+        // unionPts(dst, src);
+        return addCopyEdge(src, dst);
     }
-
-    return changed;
 }
 
 bool FlowSensitiveCG::handleLoad(NodeID node, const ConstraintEdge* load)
+{
+    bool changed = false;
+
+    for (PointsTo::iterator piter = getPts(node).begin(), epiter = getPts(node).end();
+            piter != epiter; ++piter)
+    {
+        if (processLoad(*piter, load))
+        {
+            changed = true;
+        }
+    }
+    return changed;
+}
+
+bool FlowSensitiveCG::processLoad(NodeID node, const ConstraintEdge* load)
 {
     if (pag->isConstantObj(node) || pag->getGNode(load->getDstID())->isPointer() == false)
         return false;
@@ -246,7 +279,7 @@ bool FlowSensitiveCG::handleLoad(NodeID node, const ConstraintEdge* load)
 
     auto dst = fsLoadEdge->getDstID();
 
-    unionPts(dst, src);
+    // unionPts(dst, src);
 
     return addCopyEdge(src, dst);
 }

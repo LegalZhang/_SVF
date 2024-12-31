@@ -39,7 +39,9 @@ protected:
     virtual void processNode(NodeID nodeId) override;
     virtual void postProcessNode(NodeID nodeId);
     virtual bool handleStore(NodeID node, const ConstraintEdge* store);
+    virtual bool processStore(NodeID node, const ConstraintEdge* store) override;
     virtual bool handleLoad(NodeID node, const ConstraintEdge* load);
+    virtual bool processLoad(NodeID node, const ConstraintEdge* load) override;
 
     NodeID getAddrDef(NodeID consgid, NodeID svfgid);
     bool isStrongUpdate(const StoreCGEdge* store, NodeID& singleton);
