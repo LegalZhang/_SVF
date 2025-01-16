@@ -172,39 +172,6 @@ void FlowSensitiveCG::postProcessNode(NodeID nodeId)
     timeOfProcessLoadStore += (insertEnd - insertStart) / TIMEINTERVAL;
 }
 
-/*
-void FlowsensitiveCG::handleLoadStore(ConstraintNode* node)
-{
-    NodeID nodeId = node->getId();
-    for (PointsTo::iterator piter = getPts(nodeId).begin(), epiter =
-                getPts(nodeId).end(); piter != epiter; ++piter)
-    {
-        NodeID ptd = *piter;
-        // handle load
-        for (ConstraintNode::const_iterator it = node->outgoingLoadsBegin(),
-                eit = node->outgoingLoadsEnd(); it != eit; ++it)
-        {
-            if (const FSLoadCGEdge* fsLoadEdge = SVFUtil::dyn_cast<FSLoadCGEdge>(*it))
-            {
-                if (processLoad(ptd, fsLoadEdge))
-                    pushIntoWorklist(ptd);
-            }
-        }
-
-        // handle store
-        for (ConstraintNode::const_iterator it = node->incomingStoresBegin(),
-                eit = node->incomingStoresEnd(); it != eit; ++it)
-        {
-            if (const FSStoreCGEdge* fsStoreEdge = SVFUtil::dyn_cast<FSStoreCGEdge>(*it))
-            {
-                if (processStore(ptd, fsStoreEdge))
-                    pushIntoWorklist((*it)->getSrcID());
-            }
-        }
-    }
-}
-*/
-
 bool FlowSensitiveCG::handleStore(NodeID node, const ConstraintEdge* store)
 {
     bool changed = false;

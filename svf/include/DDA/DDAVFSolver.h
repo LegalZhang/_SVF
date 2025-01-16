@@ -49,8 +49,8 @@ class DDAVFSolver
     friend class DDAStat;
 public:
     typedef SCCDetection<SVFG*> SVFGSCC;
-    typedef SCCDetection<CallGraph*> CallGraphSCC;
-    typedef CallGraphEdge::CallInstSet CallInstSet;
+    typedef SCCDetection<PTACallGraph*> CallGraphSCC;
+    typedef PTACallGraphEdge::CallInstSet CallInstSet;
     typedef SVFIR::CallSiteSet CallSiteSet;
     typedef OrderedSet<DPIm> DPTItemSet;
     typedef OrderedMap<DPIm, CPtSet> DPImToCPtSetMap;
@@ -471,9 +471,11 @@ protected:
     virtual inline bool isLocalCVarInRecursion(const CVar& var) const
     {
         NodeID id = getPtrNodeID(var);
+        const BaseObjVar* baseObj = _pag->getBaseObject(id);
+        assert(baseObj && "base object is null??");
         const MemObj* obj = _pag->getObject(id);
         assert(obj && "object not found!!");
-        if(obj->isStack())
+        if(SVFUtil::isa<StackObjVar>(baseObj))
         {
             if(const SVFFunction* svffun = _pag->getGNode(id)->getFunction())
             {
@@ -624,7 +626,7 @@ protected:
         return (getSVFGSCCRepNode(edge->getSrcID()) == getSVFGSCCRepNode(edge->getDstID()));
     }
     /// Set callgraph
-    inline void setCallGraph (CallGraph* cg)
+    inline void setCallGraph (PTACallGraph* cg)
     {
         _callGraph = cg;
     }
@@ -637,9 +639,8 @@ protected:
     //@{
     virtual inline bool isHeapCondMemObj(const CVar& var, const StoreSVFGNode*)
     {
-        const MemObj* mem = _pag->getObject(getPtrNodeID(var));
-        assert(mem && "memory object is null??");
-        return mem->isHeap();
+        const BaseObjVar* pVar = _pag->getBaseObject(getPtrNodeID(var));
+        return pVar && SVFUtil::isa<HeapObjVar, DummyObjVar>(pVar);
     }
 
     inline bool isArrayCondMemObj(const CVar& var) const
@@ -775,8 +776,8 @@ protected:
     SVFG* _svfg;					///< SVFG
     AndersenWaveDiff* _ander;		///< Andersen's analysis
     NodeBS candidateQueries;		///< candidate pointers;
-    CallGraph* _callGraph;		///< CallGraph
-    CallGraphSCC* _callGraphSCC;	///< SCC for CallGraph
+    PTACallGraph* _callGraph;		///< PTACallGraph
+    CallGraphSCC* _callGraphSCC;	///< SCC for PTACallGraph
     SVFGSCC* _svfgSCC;				///< SCC for SVFG
     DPTItemSet backwardVisited;		///< visited map during backward traversing
     DPImToCPtSetMap dpmToTLCPtSetMap;	///< points-to caching map for top-level vars

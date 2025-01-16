@@ -327,29 +327,11 @@ inline bool isProgEntryFunction(const SVFFunction* fun)
     return fun && fun->getName() == "main";
 }
 
-/// Get program entry function from module.
-inline const SVFFunction* getProgFunction(SVFModule* svfModule, const std::string& funName)
-{
-    for (SVFModule::const_iterator it = svfModule->begin(), eit = svfModule->end(); it != eit; ++it)
-    {
-        const SVFFunction *fun = *it;
-        if (fun->getName()==funName)
-            return fun;
-    }
-    return nullptr;
-}
+/// Get program entry function from function name.
+const SVFFunction* getProgFunction(const std::string& funName);
 
-/// Get program entry function from module.
-inline const SVFFunction* getProgEntryFunction(SVFModule* svfModule)
-{
-    for (SVFModule::const_iterator it = svfModule->begin(), eit = svfModule->end(); it != eit; ++it)
-    {
-        const SVFFunction *fun = *it;
-        if (isProgEntryFunction(fun))
-            return (fun);
-    }
-    return nullptr;
-}
+/// Get program entry function.
+const SVFFunction* getProgEntryFunction();
 
 /// Return true if this is a program exit function call
 //@{
@@ -369,9 +351,13 @@ inline bool isArgOfUncalledFunction(const SVFValue* svfval)
         return false;
 }
 
+bool isArgOfUncalledFunction(const SVFVar* svfvar);
+
+const ObjVar* getObjVarOfValVar(const ValVar* valVar);
+
 /// Return thread fork function
 //@{
-inline const SVFVar* getForkedFun(const CallICFGNode *inst)
+inline const ValVar* getForkedFun(const CallICFGNode *inst)
 {
     return ThreadAPI::getThreadAPI()->getForkedFun(inst);
 }
@@ -389,8 +375,6 @@ bool isHeapAllocExtCallViaArg(const CallICFGNode* cs);
 bool isHeapAllocExtCallViaRet(const CallICFGNode* cs);
 
 bool isHeapAllocExtCall(const ICFGNode* cs);
-
-
 
 //@}
 
@@ -450,7 +434,7 @@ inline bool isBarrierWaitCall(const CallICFGNode* cs)
 
 /// Return sole argument of the thread routine
 //@{
-inline const SVFVar* getActualParmAtForkSite(const CallICFGNode* cs)
+inline const ValVar* getActualParmAtForkSite(const CallICFGNode* cs)
 {
     return ThreadAPI::getThreadAPI()->getActualParmAtForkSite(cs);
 }

@@ -30,6 +30,7 @@
 #include "Util/Options.h"
 #include "Util/SVFUtil.h"
 #include "MemoryModel/PointsTo.h"
+#include "Graphs/CallGraph.h"
 
 #include <sys/resource.h>		/// increase stack size
 
@@ -396,4 +397,45 @@ bool SVFUtil::isRetInstNode(const ICFGNode* node)
 bool SVFUtil::isProgExitCall(const CallICFGNode* cs)
 {
     return isProgExitFunction(cs->getCalledFunction());
+}
+
+/// Get program entry function from module.
+const SVFFunction* SVFUtil::getProgFunction(const std::string& funName)
+{
+    CallGraph* svfirCallGraph = PAG::getPAG()->getCallGraph();
+    for (const auto& item: *svfirCallGraph)
+    {
+        const CallGraphNode*fun = item.second;
+        if (fun->getName()==funName)
+            return fun->getFunction();
+    }
+    return nullptr;
+}
+
+/// Get program entry function from module.
+const SVFFunction* SVFUtil::getProgEntryFunction()
+{
+    CallGraph* svfirCallGraph = PAG::getPAG()->getCallGraph();
+    for (const auto& item: *svfirCallGraph)
+    {
+        const CallGraphNode*fun = item.second;
+        if (isProgEntryFunction(fun->getFunction()))
+            return (fun->getFunction());
+    }
+    return nullptr;
+}
+
+bool SVFUtil::isArgOfUncalledFunction(const SVFVar* svfvar)
+{
+    const ValVar* pVar = PAG::getPAG()->getBaseValVar(svfvar->getId());
+    if(const ArgValVar* arg = SVFUtil::dyn_cast<ArgValVar>(pVar))
+        return arg->isArgOfUncalledFunction();
+    else
+        return false;
+}
+
+const ObjVar* SVFUtil::getObjVarOfValVar(const SVF::ValVar* valVar)
+{
+    assert(valVar->getInEdges().size() == 1);
+    return SVFUtil::dyn_cast<ObjVar>((*valVar->getInEdges().begin())->getSrcNode());
 }

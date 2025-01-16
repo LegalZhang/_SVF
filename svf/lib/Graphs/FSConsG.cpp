@@ -276,46 +276,57 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
             }
         }
 
-        /*
-            /// pseudocode of transforming address-taken nodes
-            if (StmtVFGNode* stmtNode = SVFUtil::dyn_cast<StmtVFGNode>(node))
-            {
-                NodeID addFSCGNode(svfgNodeID, pagNodeID)
-                {
-                    topLevel:
-                    if (hasFSCGNode(getdef, pagNodeID))
-                        return;
-                    totalCGNode++;
-                    addConstraintNode(new ConstraintNode(totalCGNode),
-                totalCGNode); PairToIDMap[pair] = id; IDToPairMap[id] = pair;
-                    return totalCGNode;
-
-                    pagIDTosvfgIDMap;
-
-
-
-                    ID(pagID (top) / totalCGNodeID (addr));
-                    Pair<pagID , svfgID >;
-
-                    addrTaken:
-                    if (hasFSCGNode(cgID, svfgID))
-                        return;
-                    totalCGNode++;
-                    addConstraintNode(new ConstraintNode(totalCGNode),
-                totalCGNode); PairToIDMap[pair] = id; IDToPairMap[id] = pair;
-                    return totalCGNode;
-                }
-
-                src = addFSCFNode(...);
-                dst = addFSCGNode(..);
-                addCopyCGEdge(src,dst);
-
-                addFSNode
-                totalCGNode++;
-
-            }
-        */
     }
+
+    /// connect indirect constraint edges
+    for (IndirectSVFGEdge* edge : svfg->indirectEdgeSet)
+    {
+        auto srcIndirect = edge->getSrcID(); // SrcSVFGID
+        auto dstIndirect = edge->getDstID(); // DstSVFGID
+        for (NodeID i : edge->getPointsTo())
+        {
+            if (!hasConstraintNodePair(i, srcIndirect))
+            {
+                totalCGNode++;
+                NodeID src = totalCGNode;
+                auto srcsvfgID = srcIndirect;
+                pairToidMap[NodePair(i, srcsvfgID)] = src;
+                idTopairMap[src] = NodePair(i, srcsvfgID);
+                // SVFGNode* srcNodeType = svfg->getSVFGNode(srcsvfgID);
+                // initialPts(src);
+                addConstraintNode(new ConstraintNode(src), src);
+            }
+
+            if (!hasConstraintNodePair(i, dstIndirect))
+            {
+                totalCGNode++;
+                NodeID dst = totalCGNode;
+                auto dstsvfgID = dstIndirect;
+                pairToidMap[NodePair(i, dstsvfgID)] = dst;
+                idTopairMap[dst] = NodePair(i, dstsvfgID);
+                // SVFGNode* dstNodeType = svfg->getSVFGNode(dstsvfgID);
+                // initialPts(dst);
+                addConstraintNode(new ConstraintNode(dst), dst);
+            }
+
+            NodeID srcNode = pairToidMap[NodePair(i, srcIndirect)];
+            NodeID dstNode = pairToidMap[NodePair(i, dstIndirect)];
+            srcNode = dstNode;
+            dstNode = srcNode;
+            addCopyCGEdge(srcNode, dstNode);
+        }
+    }
+
+}
+
+/*!
+ * Dump flow-sensitive constraint graph
+ */
+void FSConsG::dump(std::string name)
+{
+    GraphPrinter::WriteGraphToFile(outs(), name, this);
+}
+
 
     /* function-related address-taken nodes
     /// build address-taken constraint nodes
@@ -469,92 +480,3 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
         }
 
      */
-
-
-    /// connect indirect constraint edges
-    for (IndirectSVFGEdge* edge : svfg->indirectEdgeSet)
-    {
-        auto srcIndirect = edge->getSrcID(); // SrcSVFGID
-        auto dstIndirect = edge->getDstID(); // DstSVFGID
-        for (NodeID i : edge->getPointsTo())
-        {
-            if (!hasConstraintNodePair(i, srcIndirect))
-            {
-                totalCGNode++;
-                NodeID src = totalCGNode;
-                auto srcsvfgID = srcIndirect;
-                pairToidMap[NodePair(i, srcsvfgID)] = src;
-                idTopairMap[src] = NodePair(i, srcsvfgID);
-                // SVFGNode* srcNodeType = svfg->getSVFGNode(srcsvfgID);
-                // initialPts(src);
-                addConstraintNode(new ConstraintNode(src), src);
-            }
-
-            if (!hasConstraintNodePair(i, dstIndirect))
-            {
-                totalCGNode++;
-                NodeID dst = totalCGNode;
-                auto dstsvfgID = dstIndirect;
-                pairToidMap[NodePair(i, dstsvfgID)] = dst;
-                idTopairMap[dst] = NodePair(i, dstsvfgID);
-                // SVFGNode* dstNodeType = svfg->getSVFGNode(dstsvfgID);
-                // initialPts(dst);
-                addConstraintNode(new ConstraintNode(dst), dst);
-            }
-
-            NodeID srcNode = pairToidMap[NodePair(i, srcIndirect)];
-            NodeID dstNode = pairToidMap[NodePair(i, dstIndirect)];
-            srcNode = dstNode;
-            dstNode = srcNode;
-            addCopyCGEdge(srcNode, dstNode);
-        }
-    }
-
-}
-
-/*!
- * Dump flow-sensitive constraint graph
- */
-void FSConsG::dump(std::string name)
-{
-    GraphPrinter::WriteGraphToFile(outs(), name, this);
-}
-
-/* Flow-Sensitive LoadCGEdge and StoreCGEdge
-FSLoadCGEdge* FSConsG::addFSLoadCGEdge(NodeID src, NodeID dst, NodeID fsID)
-{
-    ConstraintNode* srcNode = getConstraintNode(src);
-    ConstraintNode* dstNode = getConstraintNode(dst);
-    if (hasEdge(srcNode, dstNode, ConstraintEdge::Load))
-        return nullptr;
-
-    FSLoadCGEdge* edge = new FSLoadCGEdge(srcNode, dstNode, edgeIndex++, fsID);
-
-    bool inserted = LoadCGEdgeSet.insert(edge).second;
-    (void)inserted; // Suppress warning of unused variable under release build
-    assert(inserted && "new FSLoadCGEdge not added??");
-
-    srcNode->addOutgoingLoadEdge(edge);
-    dstNode->addIncomingLoadEdge(edge);
-    return edge;
-}
-
-FSStoreCGEdge* FSConsG::addFSStoreCGEdge(NodeID src, NodeID dst, NodeID fsID)
-{
-    ConstraintNode* srcNode = getConstraintNode(src);
-    ConstraintNode* dstNode = getConstraintNode(dst);
-    if (hasEdge(srcNode, dstNode, ConstraintEdge::Store))
-        return nullptr;
-
-    FSStoreCGEdge* edge =
-        new FSStoreCGEdge(srcNode, dstNode, edgeIndex++, fsID);
-
-    bool inserted = StoreCGEdgeSet.insert(edge).second;
-    (void)inserted; // Suppress warning of unused variable under release build
-    assert(inserted && "new StoreCGEdge not added??");
-
-    srcNode->addOutgoingStoreEdge(edge);
-    dstNode->addIncomingStoreEdge(edge);
-    return edge;
-}
-*/

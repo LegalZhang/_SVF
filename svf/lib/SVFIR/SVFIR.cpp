@@ -29,6 +29,7 @@
 
 #include "Util/Options.h"
 #include "SVFIR/SVFIR.h"
+#include "Graphs/CallGraph.h"
 
 using namespace SVF;
 using namespace SVFUtil;
@@ -390,7 +391,7 @@ NodeID SVFIR::addGepValNode(const SVFValue* curInst,const SVFValue* gepVal, cons
     assert(0==GepValObjMap[curInst].count(std::make_pair(base, ap))
            && "this node should not be created before");
     GepValObjMap[curInst][std::make_pair(base, ap)] = i;
-    GepValVar *node = new GepValVar(gepVal, i, ap, type);
+    GepValVar *node = new GepValVar(base, gepVal, i, ap, type);
     return addValNode(gepVal, node, i);
 }
 
@@ -402,7 +403,7 @@ NodeID SVFIR::getGepObjVar(NodeID id, const APOffset& apOffset)
     SVFVar* node = pag->getGNode(id);
     if (GepObjVar* gepNode = SVFUtil::dyn_cast<GepObjVar>(node))
         return getGepObjVar(gepNode->getMemObj(), gepNode->getConstantFieldIdx() + apOffset);
-    else if (FIObjVar* baseNode = SVFUtil::dyn_cast<FIObjVar>(node))
+    else if (BaseObjVar* baseNode = SVFUtil::dyn_cast<BaseObjVar>(node))
         return getGepObjVar(baseNode->getMemObj(), apOffset);
     else if (DummyObjVar* baseNode = SVFUtil::dyn_cast<DummyObjVar>(node))
         return getGepObjVar(baseNode->getMemObj(), apOffset);
@@ -467,8 +468,19 @@ NodeID SVFIR::addFIObjNode(const MemObj* obj)
     //assert(findPAGNode(i) == false && "this node should not be created before");
     NodeID base = obj->getId();
     memToFieldsMap[base].set(obj->getId());
-    FIObjVar *node = new FIObjVar(obj->getValue(), obj->getId(), obj);
+    BaseObjVar*node = new BaseObjVar(obj->getValue(), obj->getId(), obj);
     return addObjNode(obj->getValue(), node, obj->getId());
+}
+
+NodeID SVFIR::addFunObjNode(NodeID id, const CallGraphNode* callGraphNode)
+{
+    const MemObj* mem = getMemObj(callGraphNode->getFunction());
+    assert(mem->getId() == id && "not same object id?");
+    //assert(findPAGNode(i) == false && "this node should not be created before");
+    NodeID base = mem->getId();
+    memToFieldsMap[base].set(mem->getId());
+    FunObjVar*node = new FunObjVar(id, mem, callGraphNode);
+    return addObjNode(mem->getValue(), node, mem->getId());
 }
 
 /*!
@@ -544,6 +556,8 @@ void SVFIR::destroy()
     chgraph = nullptr;
     SVFModule::releaseSVFModule();
     svfModule = nullptr;
+    delete callGraph;
+    callGraph = nullptr;
 }
 
 /*!
@@ -656,11 +670,10 @@ bool SVFIR::isValidPointer(NodeID nodeId) const
 
     if (node->hasValue() && node->isPointer())
     {
-        if(const SVFArgument* arg = SVFUtil::dyn_cast<SVFArgument>(node->getValue()))
-        {
-            if (!(arg->getParent()->isDeclaration()))
-                return true;
-        }
+        if (const ValVar* pVar = pag->getBaseValVar(nodeId))
+            if (const ArgValVar* arg = SVFUtil::dyn_cast<ArgValVar>(pVar))
+                if (!(arg->getParent()->isDeclaration()))
+                    return true;
     }
 
     if ((node->getInEdges().empty() && node->getOutEdges().empty()))
@@ -672,9 +685,15 @@ bool SVFIR::isValidTopLevelPtr(const SVFVar* node)
 {
     if (SVFUtil::isa<ValVar>(node))
     {
-        if (isValidPointer(node->getId()) && node->hasValue())
+        if (isValidPointer(node->getId()))
         {
-            return !SVFUtil::isArgOfUncalledFunction(node->getValue());
+            // TODO: after svf value is removed, we use type to determine top level ptr
+            if (SVFUtil::isa<RetPN, VarArgPN, FunValVar, HeapObjVar, StackObjVar>(node))
+            {
+                return true;
+            }
+            else if(node->hasValue())
+                return !SVFUtil::isArgOfUncalledFunction(node);
         }
     }
     return false;

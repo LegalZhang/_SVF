@@ -438,7 +438,7 @@ PHIVFGNode::PHIVFGNode(NodeID id, const PAGNode* r,VFGNodeK k): VFGNode(id, k), 
  * 2) connect VFG edges
  *    between two statements (PAGEdges)
  */
-VFG::VFG(CallGraph* cg, VFGK k): totalVFGNode(0), callgraph(cg), pag(SVFIR::getPAG()), kind(k)
+VFG::VFG(PTACallGraph* cg, VFGK k): totalVFGNode(0), callgraph(cg), pag(SVFIR::getPAG()), kind(k)
 {
 
     DBOUT(DGENERAL, outs() << pasMsg("\tCreate VFG Top Level Node\n"));
@@ -1073,29 +1073,29 @@ const SVFFunction* VFG::isFunEntryVFGNode(const VFGNode* node) const
 }
 
 
-const SVFValue* StmtVFGNode::getValue() const
+const SVFVar* StmtVFGNode::getValue() const
 {
     return getPAGEdge()->getValue();
 }
 
-const SVFValue* CmpVFGNode::getValue() const
+const SVFVar* CmpVFGNode::getValue() const
 {
-    return getRes()->getValue();
+    return getRes();
 }
 
-const SVFValue* BinaryOPVFGNode::getValue() const
+const SVFVar* BinaryOPVFGNode::getValue() const
 {
-    return getRes()->getValue();
+    return getRes();
 }
 
-const SVFValue* PHIVFGNode::getValue() const
+const SVFVar* PHIVFGNode::getValue() const
 {
-    return getRes()->getValue();
+    return getRes()->hasValue() ? getRes(): nullptr;
 }
 
-const SVFValue* ArgumentVFGNode::getValue() const
+const SVFVar* ArgumentVFGNode::getValue() const
 {
-    return param->hasValue() ? param->getValue() : nullptr;
+    return param->hasValue() ? param : nullptr;
 }
 
 /*!

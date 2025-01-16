@@ -35,6 +35,7 @@
 #include <climits>
 #include <cmath>
 #include "SVFIR/SVFStatements.h"
+#include "Graphs/CallGraph.h"
 
 using namespace SVF;
 using namespace SVFUtil;
@@ -59,8 +60,10 @@ void SaberCondAllocator::allocate(const SVFModule *M)
 {
     DBOUT(DGENERAL, outs() << pasMsg("path condition allocation starts\n"));
 
-    for (const auto &func: *M)
+    CallGraph* svfirCallGraph = PAG::getPAG()->getCallGraph();
+    for (const auto& item: *svfirCallGraph)
     {
+        const SVFFunction *func = (item.second)->getFunction();
         if (!SVFUtil::isExtCall(func))
         {
             // Allocate conditions for a program.
@@ -99,8 +102,7 @@ void SaberCondAllocator::allocateForBB(const SVFBasicBlock &bb)
         std::vector<Condition> condVec;
         for (u32_t i = 0; i < bit_num; i++)
         {
-            const IntraICFGNode* svfInst = cast<IntraICFGNode>(bb.back());
-            condVec.push_back(newCond(svfInst));
+            condVec.push_back(newCond(bb.back()));
         }
 
         // iterate each successor
@@ -187,7 +189,13 @@ SaberCondAllocator::evaluateTestNullLikeExpr(const BranchStmt *branchStmt, const
     const SVFBasicBlock* succ1 = branchStmt->getSuccessor(0)->getBB();
 
     const ValVar* condVar = SVFUtil::cast<ValVar>(branchStmt->getCondition());
-    if (isTestNullExpr(SVFUtil::cast<ICFGNode>(condVar->getGNode())))
+    if (condVar->isConstDataOrAggDataButNotNullPtr())
+    {
+        // branch condition is a constant value, return nullexpr because it cannot be test null
+        //  br i1 false, label %44, label %75, !dbg !7669 { "ln": 2033, "cl": 7, "fl": "re_lexer.c" }
+        return Condition::nullExpr();
+    }
+    if (isTestNullExpr(SVFUtil::cast<ICFGNode>(condVar->getICFGNode())))
     {
         // succ is then branch
         if (succ1 == succ)
@@ -196,7 +204,7 @@ SaberCondAllocator::evaluateTestNullLikeExpr(const BranchStmt *branchStmt, const
         else
             return getTrueCond();
     }
-    if (isTestNotNullExpr(SVFUtil::cast<ICFGNode>(condVar->getGNode())))
+    if (isTestNotNullExpr(condVar->getICFGNode()))
     {
         // succ is then branch
         if (succ1 == succ)
@@ -391,11 +399,12 @@ bool SaberCondAllocator::isTestNotNullExpr(const ICFGNode* test) const
 bool SaberCondAllocator::isTestContainsNullAndTheValue(const CmpStmt *cmp) const
 {
 
-    const SVFValue* op0 = cmp->getOpVar(0)->getValue();
-    const SVFValue* op1 = cmp->getOpVar(1)->getValue();
-    if (SVFUtil::isa<SVFConstantNullPtr>(op1))
+    // must be val var?
+    const SVFVar* op0 = cmp->getOpVar(0);
+    const SVFVar* op1 = cmp->getOpVar(1);
+    if (SVFUtil::isa<ConstantNullPtrValVar>(op1))
     {
-        Set<const SVFValue* > inDirVal;
+        Set<const SVFVar* > inDirVal;
         inDirVal.insert(getCurEvalSVFGNode()->getValue());
         for (const auto &it: getCurEvalSVFGNode()->getOutEdges())
         {
@@ -403,9 +412,9 @@ bool SaberCondAllocator::isTestContainsNullAndTheValue(const CmpStmt *cmp) const
         }
         return inDirVal.find(op0) != inDirVal.end();
     }
-    else if (SVFUtil::isa<SVFConstantNullPtr>(op0))
+    else if (SVFUtil::isa<ConstantNullPtrValVar>(op0))
     {
-        Set<const SVFValue* > inDirVal;
+        Set<const SVFVar* > inDirVal;
         inDirVal.insert(getCurEvalSVFGNode()->getValue());
         for (const auto &it: getCurEvalSVFGNode()->getOutEdges())
         {

@@ -724,13 +724,13 @@ void SymbolTableBuilder::analyzeObjType(ObjTypeInfo* typeinfo, const Value* val)
 
 /*!
  * Analyze byte size of heap alloc function (e.g. malloc/calloc/...)
- * 1) __attribute__((annotate("ALLOC_RET"), annotate("AllocSize:Arg0")))
+ * 1) __attribute__((annotate("ALLOC_HEAP_RET"), annotate("AllocSize:Arg0")))
      void* safe_malloc(unsigned long size).
      Byte Size is the size(Arg0)
-   2)__attribute__((annotate("ALLOC_RET"), annotate("AllocSize:Arg0*Arg1")))
+   2)__attribute__((annotate("ALLOC_HEAP_RET"), annotate("AllocSize:Arg0*Arg1")))
     char* safecalloc(int a, int b)
     Byte Size is a(Arg0) * b(Arg1)
-   3)__attribute__((annotate("ALLOC_RET"), annotate("UNKNOWN")))
+   3)__attribute__((annotate("ALLOC_HEAP_RET"), annotate("UNKNOWN")))
     void* __sysv_signal(int a, void *b)
     Byte Size is Unknown
     If all required arg values are constant, byte Size is also constant,
@@ -781,7 +781,7 @@ u32_t SymbolTableBuilder::analyzeHeapAllocByteSize(const Value* val)
                                 llvm::dyn_cast<llvm::ConstantInt>(arg))
                     {
                         // Multiply the constant Value if all Args are const
-                        product *= constIntArg->getZExtValue();
+                        product *= LLVMUtil::getIntegerValue(constIntArg).second;
                     }
                     else
                     {
@@ -871,8 +871,8 @@ void SymbolTableBuilder::initTypeInfo(ObjTypeInfo* typeinfo, const Value* val,
         /// In most cases, `NumElements` is not specified in the instruction, which means there is only one element (objSize=1).
         if(const ConstantInt* sz = SVFUtil::dyn_cast<ConstantInt>(allocaInst->getArraySize()))
         {
-            elemNum = sz->getZExtValue() * getNumOfElements(objTy);
-            byteSize = sz->getZExtValue() * typeinfo->getType()->getByteSize();
+            elemNum = LLVMUtil::getIntegerValue(sz).second * getNumOfElements(objTy);
+            byteSize = LLVMUtil::getIntegerValue(sz).second * typeinfo->getType()->getByteSize();
         }
         /// if ArraySize is not constant, byteSize is not static determined.
         else

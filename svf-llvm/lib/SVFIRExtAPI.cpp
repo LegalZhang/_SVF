@@ -31,6 +31,7 @@
 #include "Util/SVFUtil.h"
 #include "SVF-LLVM/SymbolTableBuilder.h"
 #include "SVF-LLVM/ObjTypeInference.h"
+#include "Graphs/CallGraph.h"
 
 using namespace std;
 using namespace SVF;
@@ -49,7 +50,8 @@ const Type* SVFIRBuilder::getBaseTypeAndFlattenedFields(const Value* V, std::vec
     /// use user-specified size for this copy operation if the size is a constaint int
     if(szValue && SVFUtil::isa<ConstantInt>(szValue))
     {
-        numOfElems = (numOfElems > SVFUtil::cast<ConstantInt>(szValue)->getSExtValue()) ? SVFUtil::cast<ConstantInt>(szValue)->getSExtValue() : numOfElems;
+        auto szIntVal = LLVMUtil::getIntegerValue(SVFUtil::cast<ConstantInt>(szValue));
+        numOfElems = (numOfElems > szIntVal.first) ? szIntVal.first : numOfElems;
     }
 
     LLVMContext& context = LLVMModuleSet::getLLVMModuleSet()->getContext();
@@ -63,7 +65,7 @@ const Type* SVFIRBuilder::getBaseTypeAndFlattenedFields(const Value* V, std::vec
         {
             SymbolTableBuilder builder(pag->getSymbolInfo());
             builder.collectSym(offset);
-            pag->addValNode(svfOffset, pag->getSymbolInfo()->getValSym(svfOffset), nullptr);
+            pag->addConstantIntValNode(svfOffset, pag->getSymbolInfo()->getValSym(svfOffset), LLVMUtil::getIntegerValue(offset), nullptr);
         }
         ls.addOffsetVarAndGepTypePair(getPAG()->getGNode(getPAG()->getValueNode(svfOffset)), nullptr);
         fields.push_back(ls);
@@ -256,9 +258,11 @@ void SVFIRBuilder::handleExtCall(const CallBase* cs, const SVFFunction* svfCalle
 
     if (isThreadForkCall(callICFGNode))
     {
-        if (const SVFFunction* forkedFun = SVFUtil::dyn_cast<SVFFunction>(getForkedFun(callICFGNode)->getValue()))
+        const ValVar* valVar = getForkedFun(callICFGNode);
+        if (const FunValVar* funcValVar = SVFUtil::dyn_cast<FunValVar>(valVar))
         {
-            forkedFun = forkedFun->getDefFunForMultipleModule();
+            const SVFFunction* forkedFun = funcValVar->getCallGraphNode()->getFunction()
+                                           ->getDefFunForMultipleModule();
             const SVFVar* actualParm = getActualParmAtForkSite(callICFGNode);
             /// pthread_create has 1 arg.
             /// apr_thread_create has 2 arg.

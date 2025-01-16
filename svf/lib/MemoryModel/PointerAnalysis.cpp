@@ -36,6 +36,7 @@
 #include "Util/PTAStat.h"
 #include "Graphs/ThreadCallGraph.h"
 #include "Graphs/ICFG.h"
+#include "Graphs/CallGraph.h"
 #include "Util/CallGraphBuilder.h"
 
 #include <iomanip>
@@ -111,15 +112,13 @@ void PointerAnalysis::initialize()
     /// initialise pta call graph for every pointer analysis instance
     if(Options::EnableThreadCallGraph())
     {
-        ThreadCallGraph* cg = new ThreadCallGraph();
-        ThreadCallGraphBuilder bd(cg, pag->getICFG());
-        callgraph = bd.buildThreadCallGraph(pag->getModule());
+        CallGraphBuilder bd;
+        callgraph = bd.buildThreadCallGraph();
     }
     else
     {
-        CallGraph* cg = new CallGraph();
-        CallGraphBuilder bd(cg,pag->getICFG());
-        callgraph = bd.buildCallGraph(pag->getModule());
+        CallGraphBuilder bd;
+        callgraph = bd.buildPTACallGraph();
     }
     callGraphSCCDetection();
 
@@ -134,9 +133,9 @@ void PointerAnalysis::initialize()
  */
 bool PointerAnalysis::isLocalVarInRecursiveFun(NodeID id) const
 {
-    const MemObj* obj = pag->getObject(id);
-    assert(obj && "object not found!!");
-    if(obj->isStack())
+    const BaseObjVar* baseObjVar = pag->getBaseObject(id);
+    assert(baseObjVar && "base object not found!!");
+    if(SVFUtil::isa<StackObjVar>(baseObjVar))
     {
         if(const SVFFunction* svffun = pag->getGNode(id)->getFunction())
         {
@@ -401,7 +400,7 @@ void PointerAnalysis::resolveIndCalls(const CallICFGNode* cs, const PointsTo& ta
 
             if(obj->isFunction())
             {
-                const SVFFunction* calleefun = SVFUtil::cast<SVFFunction>(obj->getValue());
+                const SVFFunction* calleefun = SVFUtil::cast<CallGraphNode>(obj->getGNode())->getFunction();
                 const SVFFunction* callee = calleefun->getDefFunForMultipleModule();
 
                 if(SVFUtil::matchArgs(cs, callee) == false)
@@ -415,7 +414,7 @@ void PointerAnalysis::resolveIndCalls(const CallICFGNode* cs, const PointsTo& ta
                     callgraph->addIndirectCallGraphEdge(cs, cs->getCaller(), callee);
                     // FIXME: do we need to update llvm call graph here?
                     // The indirect call is maintained by ourself, We may update llvm's when we need to
-                    //CallGraphNode* callgraphNode = callgraph->getOrInsertFunction(cs.getCaller());
+                    //PTACallGraphNode* callgraphNode = callgraph->getOrInsertFunction(cs.getCaller());
                     //callgraphNode->addCalledFunction(cs,callgraph->getOrInsertFunction(callee));
                 }
             }
@@ -447,11 +446,14 @@ void PointerAnalysis::getVFnsFromPts(const CallICFGNode* cs, const PointsTo &tar
             const PAGNode *ptdnode = pag->getGNode(*it);
             if (ptdnode->hasValue())
             {
-                if (const SVFGlobalValue *vtbl = SVFUtil::dyn_cast<SVFGlobalValue>(ptdnode->getValue()))
+                if ((isa<ObjVar>(ptdnode) && isa<GlobalObjVar>(pag->getBaseObject(ptdnode->getId())))
+                        || (isa<ValVar>(ptdnode) && isa<GlobalValVar>(pag->getBaseValVar(ptdnode->getId()))))
                 {
-                    if (chaVtbls.find(vtbl) != chaVtbls.end())
-                        vtbls.insert(vtbl);
+                    const SVFGlobalValue* globalValue = SVFUtil::dyn_cast<SVFGlobalValue>(ptdnode->getValue());
+                    if (chaVtbls.find(globalValue) != chaVtbls.end())
+                        vtbls.insert(globalValue);
                 }
+
             }
         }
         chgraph->getVFnsFromVtbls(cs, vtbls, vfns);

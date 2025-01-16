@@ -105,7 +105,7 @@ public:
     typedef SVFIR::CallSiteToFunPtrMap CallSiteToFunPtrMap;
     typedef Set<const SVFFunction*> FunctionSet;
     typedef OrderedMap<const CallICFGNode*, FunctionSet> CallEdgeMap;
-    typedef SCCDetection<CallGraph*> CallGraphSCC;
+    typedef SCCDetection<PTACallGraph*> CallGraphSCC;
     typedef Set<const SVFGlobalValue*> VTableSet;
     typedef Set<const SVFFunction*> VFunSet;
     //@}
@@ -150,8 +150,8 @@ protected:
     /// Statistics
     PTAStat* stat;
     /// Call graph used for pointer analysis
-    CallGraph* callgraph;
-    /// SCC for CallGraph
+    PTACallGraph* callgraph;
+    /// SCC for PTACallGraph
     CallGraphSCC* callGraphSCC;
     /// Interprocedural control-flow graph
     ICFG* icfg;
@@ -170,7 +170,7 @@ public:
         return getCallGraph()->getNumOfResolvedIndCallEdge();
     }
     /// Return call graph
-    inline CallGraph* getCallGraph() const
+    inline PTACallGraph* getCallGraph() const
     {
         return callgraph;
     }
@@ -306,9 +306,7 @@ public:
     //@{
     inline bool isHeapMemObj(NodeID id) const
     {
-        const MemObj* mem = pag->getObject(id);
-        assert(mem && "memory object is null??");
-        return mem->isHeap();
+        return pag->getBaseObject(id) && SVFUtil::isa<HeapObjVar, DummyObjVar>(pag->getBaseObject(id));
     }
 
     inline bool isArrayMemObj(NodeID id) const
@@ -323,7 +321,7 @@ public:
     ///@{
     inline bool isFIObjNode(NodeID id) const
     {
-        return (SVFUtil::isa<FIObjVar>(pag->getGNode(id)));
+        return (SVFUtil::isa<BaseObjVar>(pag->getGNode(id)));
     }
     inline NodeID getBaseObjVar(NodeID id)
     {
@@ -384,9 +382,9 @@ public:
     /// Resolve indirect call edges
     virtual void resolveIndCalls(const CallICFGNode* cs, const PointsTo& target, CallEdgeMap& newEdges);
 
-    /// CallGraph SCC related methods
+    /// PTACallGraph SCC related methods
     //@{
-    /// CallGraph SCC detection
+    /// PTACallGraph SCC detection
     inline void callGraphSCCDetection()
     {
         if(callGraphSCC==nullptr)
@@ -399,11 +397,11 @@ public:
     {
         return callGraphSCC->repNode(id);
     }
-    /// Return TRUE if this edge is inside a CallGraph SCC, i.e., src node and dst node are in the same SCC on the SVFG.
+    /// Return TRUE if this edge is inside a PTACallGraph SCC, i.e., src node and dst node are in the same SCC on the SVFG.
     inline bool inSameCallGraphSCC(const SVFFunction* fun1,const SVFFunction* fun2)
     {
-        const CallGraphNode* src = callgraph->getCallGraphNode(fun1);
-        const CallGraphNode* dst = callgraph->getCallGraphNode(fun2);
+        const PTACallGraphNode* src = callgraph->getCallGraphNode(fun1);
+        const PTACallGraphNode* dst = callgraph->getCallGraphNode(fun2);
         return (getCallGraphSCCRepNode(src->getId()) == getCallGraphSCCRepNode(dst->getId()));
     }
     inline bool isInRecursion(const SVFFunction* fun) const

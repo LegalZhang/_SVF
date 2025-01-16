@@ -32,6 +32,7 @@
 
 #include "Util/ThreadAPI.h"
 #include "Util/SVFUtil.h"
+#include "Graphs/CallGraph.h"
 #include "SVFIR/SVFIR.h"
 
 #include <iostream>		/// std output
@@ -160,13 +161,13 @@ bool ThreadAPI::isTDBarWait(const CallICFGNode *inst) const
 }
 
 
-const SVFVar* ThreadAPI::getForkedThread(const CallICFGNode *inst) const
+const ValVar* ThreadAPI::getForkedThread(const CallICFGNode *inst) const
 {
     assert(isTDFork(inst) && "not a thread fork function!");
     return inst->getArgument(0);
 }
 
-const SVFVar* ThreadAPI::getForkedFun(const CallICFGNode *inst) const
+const ValVar* ThreadAPI::getForkedFun(const CallICFGNode *inst) const
 {
     assert(isTDFork(inst) && "not a thread fork function!");
     return inst->getArgument(2);
@@ -174,7 +175,7 @@ const SVFVar* ThreadAPI::getForkedFun(const CallICFGNode *inst) const
 
 /// Return the forth argument of the call,
 /// Note that, it is the sole argument of start routine ( a void* pointer )
-const SVFVar* ThreadAPI::getActualParmAtForkSite(const CallICFGNode *inst) const
+const ValVar* ThreadAPI::getActualParmAtForkSite(const CallICFGNode *inst) const
 {
     assert(isTDFork(inst) && "not a thread fork function!");
     return inst->getArgument(3);
@@ -206,13 +207,13 @@ const SVFVar* ThreadAPI::getLockVal(const ICFGNode *cs) const
 const SVFVar* ThreadAPI::getJoinedThread(const CallICFGNode *cs) const
 {
     assert(isTDJoin(cs) && "not a thread join function!");
-    const SVFVar* join = cs->getArgument(0);
+    const ValVar* join = cs->getArgument(0);
     for(const SVFStmt* stmt : join->getInEdges())
     {
         if(SVFUtil::isa<LoadStmt>(stmt))
             return stmt->getSrcNode();
     }
-    if(SVFUtil::isa<SVFArgument>(join->getValue()))
+    if(SVFUtil::isa<ArgValVar>(join))
         return join;
 
     assert(false && "the value of the first argument at join is not a load instruction?");
@@ -269,9 +270,10 @@ void ThreadAPI::performAPIStat(SVFModule* module)
 
     statInit(tdAPIStatMap);
 
-    for (SVFModule::const_iterator it = module->begin(), eit = module->end(); it != eit; ++it)
+    CallGraph* svfirCallGraph = PAG::getPAG()->getCallGraph();
+    for (const auto& item: *svfirCallGraph)
     {
-        for (SVFFunction::const_iterator bit = (*it)->begin(), ebit = (*it)->end(); bit != ebit; ++bit)
+        for (SVFFunction::const_iterator bit = (item.second)->getFunction()->begin(), ebit = (item.second)->getFunction()->end(); bit != ebit; ++bit)
         {
             const SVFBasicBlock* bb = *bit;
             for (const auto& svfInst: bb->getICFGNodeList())

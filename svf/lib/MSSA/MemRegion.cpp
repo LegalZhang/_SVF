@@ -31,6 +31,7 @@
 #include "SVFIR/SVFModule.h"
 #include "MSSA/MemRegion.h"
 #include "MSSA/MSSAMuChi.h"
+#include "Graphs/CallGraph.h"
 
 using namespace SVF;
 using namespace SVFUtil;
@@ -173,11 +174,10 @@ SVFIR::SVFStmtList& MRGenerator::getPAGEdgesFromInst(const ICFGNode* node)
 void MRGenerator::collectModRefForLoadStore()
 {
 
-    SVFModule* svfModule = pta->getModule();
-    for (SVFModule::const_iterator fi = svfModule->begin(), efi = svfModule->end(); fi != efi;
-            ++fi)
+    CallGraph* svfirCallGraph = PAG::getPAG()->getCallGraph();
+    for (const auto& item: *svfirCallGraph)
     {
-        const SVFFunction& fun = **fi;
+        const SVFFunction& fun = *item.second->getFunction();
 
         /// if this function does not have any caller, then we do not care its MSSA
         if (Options::IgnoreDeadFun() && fun.isUncalledFunction())
@@ -248,7 +248,7 @@ void MRGenerator::collectModRefForCall()
         const NodeBS& subNodes = callGraphSCC->subNodes(callGraphNodeID);
         for(NodeBS::iterator it = subNodes.begin(), eit = subNodes.end(); it!=eit; ++it)
         {
-            CallGraphNode* subCallGraphNode = callGraph->getCallGraphNode(*it);
+            PTACallGraphNode* subCallGraphNode = callGraph->getCallGraphNode(*it);
             /// Get mod-ref of all callsites calling callGraphNode
             modRefAnalysis(subCallGraphNode,worklist);
         }
@@ -577,13 +577,15 @@ bool MRGenerator::isNonLocalObject(NodeID id, const SVFFunction* curFun) const
     const MemObj* obj = pta->getPAG()->getObject(id);
     assert(obj && "object not found!!");
     /// if the object is heap or global
-    if(obj->isGlobalObj() || obj->isHeap())
+    const BaseObjVar* pVar = pta->getPAG()->getBaseObject(id);
+    assert(pVar && "object not found!");
+    if(obj->isGlobalObj() || SVFUtil::isa<HeapObjVar, DummyObjVar>(pVar))
         return true;
     /// or if the local variable of its callers
     /// or a local variable is in function recursion cycles
-    else if(obj->isStack())
+    else if(SVFUtil::isa<StackObjVar>(pVar))
     {
-        if(const SVFFunction* svffun = pta->getPAG()->getGNode(id)->getFunction())
+        if(const SVFFunction* svffun = pVar->getFunction())
         {
             if(svffun!=curFun)
                 return true;
@@ -630,17 +632,17 @@ bool MRGenerator::handleCallsiteModRef(NodeBS& mod, NodeBS& ref, const CallICFGN
  * Call site mod-ref analysis
  * Compute mod-ref of all callsites invoking this call graph node
  */
-void MRGenerator::modRefAnalysis(CallGraphNode* callGraphNode, WorkList& worklist)
+void MRGenerator::modRefAnalysis(PTACallGraphNode* callGraphNode, WorkList& worklist)
 {
 
     /// add ref/mod set of callee to its invocation callsites at caller
-    for(CallGraphNode::iterator it = callGraphNode->InEdgeBegin(), eit = callGraphNode->InEdgeEnd();
+    for(PTACallGraphNode::iterator it = callGraphNode->InEdgeBegin(), eit = callGraphNode->InEdgeEnd();
             it!=eit; ++it)
     {
-        CallGraphEdge* edge = *it;
+        PTACallGraphEdge* edge = *it;
 
         /// handle direct callsites
-        for(CallGraphEdge::CallInstSet::iterator cit = edge->getDirectCalls().begin(),
+        for(PTACallGraphEdge::CallInstSet::iterator cit = edge->getDirectCalls().begin(),
                 ecit = edge->getDirectCalls().end(); cit!=ecit; ++cit)
         {
             NodeBS mod, ref;
@@ -650,7 +652,7 @@ void MRGenerator::modRefAnalysis(CallGraphNode* callGraphNode, WorkList& worklis
                 worklist.push(edge->getSrcID());
         }
         /// handle indirect callsites
-        for(CallGraphEdge::CallInstSet::iterator cit = edge->getIndirectCalls().begin(),
+        for(PTACallGraphEdge::CallInstSet::iterator cit = edge->getIndirectCalls().begin(),
                 ecit = edge->getIndirectCalls().end(); cit!=ecit; ++cit)
         {
             NodeBS mod, ref;

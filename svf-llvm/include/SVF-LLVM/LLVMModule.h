@@ -54,6 +54,7 @@ public:
     typedef Map<const GlobalVariable*, GlobalVariable*> GlobalDefToRepMapTy;
 
     typedef Map<const Function*, SVFFunction*> LLVMFun2SVFFunMap;
+    typedef Map<const Function*, CallGraphNode*> LLVMFun2CallGraphNodeMap;
     typedef Map<const BasicBlock*, SVFBasicBlock*> LLVMBB2SVFBBMap;
     typedef Map<const Instruction*, SVFInstruction*> LLVMInst2SVFInstMap;
     typedef Map<const Argument*, SVFArgument*> LLVMArgument2SVFArgumentMap;
@@ -76,6 +77,7 @@ private:
     static bool preProcessed;
     SymbolTableInfo* symInfo;
     SVFModule* svfModule; ///< Borrowed from singleton SVFModule::svfModule
+    ICFG* icfg;
     std::unique_ptr<LLVMContext> owned_ctx;
     std::vector<std::unique_ptr<Module>> owned_modules;
     std::vector<std::reference_wrapper<Module>> modules;
@@ -88,6 +90,7 @@ private:
     GlobalDefToRepMapTy GlobalDefToRepMap;
 
     LLVMFun2SVFFunMap LLVMFunc2SVFFunc; ///< Map an LLVM Function to an SVF Function
+    LLVMFun2CallGraphNodeMap LLVMFunc2CallGraphNode; ///< Map an LLVM Function to an CallGraph Node
     LLVMBB2SVFBBMap LLVMBB2SVFBB;
     LLVMInst2SVFInstMap LLVMInst2SVFInst;
     LLVMArgument2SVFArgumentMap LLVMArgument2SVFArgument;
@@ -104,6 +107,9 @@ private:
     InstToBlockNodeMapTy InstToBlockNodeMap; ///< map a basic block to its ICFGNode
     FunToFunEntryNodeMapTy FunToFunEntryNodeMap; ///< map a function to its FunExitICFGNode
     FunToFunExitNodeMapTy FunToFunExitNodeMap; ///< map a function to its FunEntryICFGNode
+    CallGraph* callgraph;
+
+    Map<const Function*, DominatorTree> FunToDominatorTree;
 
     /// Constructor
     LLVMModuleSet();
@@ -168,6 +174,9 @@ public:
         LLVMFunc2SVFFunc[func] = svfFunc;
         setValueAttr(func,svfFunc);
     }
+
+    void addFunctionMap(const Function* func, CallGraphNode* svfFunc);
+
     inline void addBasicBlockMap(const BasicBlock* bb, SVFBasicBlock* svfBB)
     {
         LLVMBB2SVFBB[bb] = svfBB;
@@ -178,6 +187,22 @@ public:
         LLVMInst2SVFInst[inst] = svfInst;
         setValueAttr(inst,svfInst);
     }
+    inline void addInstructionMap(const Instruction* inst, CallICFGNode* svfInst)
+    {
+        CSToCallNodeMap[inst] = svfInst;
+        addToLLVMVal2SVFVarMap(inst, svfInst);
+    }
+    inline void addInstructionMap(const Instruction* inst, RetICFGNode* svfInst)
+    {
+        CSToRetNodeMap[inst] = svfInst;
+        addToLLVMVal2SVFVarMap(inst, svfInst);
+    }
+    inline void addInstructionMap(const Instruction* inst, IntraICFGNode* svfInst)
+    {
+        InstToBlockNodeMap[inst] = svfInst;
+        addToLLVMVal2SVFVarMap(inst, svfInst);
+    }
+
     inline void addArgumentMap(const Argument* arg, SVFArgument* svfArg)
     {
         LLVMArgument2SVFArgument[arg] = svfArg;
@@ -222,6 +247,13 @@ public:
     {
         SVFBaseNode2LLVMValueMap ::const_iterator it = SVFBaseNode2LLVMValue.find(value);
         assert(it!=SVFBaseNode2LLVMValue.end() && "can't find corresponding llvm value!");
+        return it->second;
+    }
+
+    inline CallGraphNode* getCallGraphNode(const Function* fun) const
+    {
+        LLVMFun2CallGraphNodeMap::const_iterator it = LLVMFunc2CallGraphNode.find(fun);
+        assert(it!=LLVMFunc2CallGraphNode.end() && "SVF Function not found!");
         return it->second;
     }
 
@@ -362,6 +394,13 @@ public:
 
     ObjTypeInference* getTypeInference();
 
+    inline ICFG* getICFG()
+    {
+        return icfg;
+    }
+
+    DominatorTree& getDomTree(const Function* fun);
+
 private:
     /// Create SVFTypes
     SVFType* addSVFTypeInfo(const Type* t);
@@ -387,7 +426,7 @@ private:
     void initSVFBasicBlock(const Function* func);
     void initDomTree(SVFFunction* func, const Function* f);
     void setValueAttr(const Value* val, SVFValue* value);
-    void setValueAttr(const Value* val, SVFBaseNode* svfBaseNode);
+    void addToLLVMVal2SVFVarMap(const Value* val, SVFBaseNode* svfBaseNode);
     void buildFunToFunMap();
     void buildGlobalDefToRepMap();
     /// Invoke llvm passes to modify module

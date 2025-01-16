@@ -40,6 +40,9 @@
 #include "llvm/Support/FileSystem.h"
 #include "SVF-LLVM/ObjTypeInference.h"
 #include "llvm/Transforms/Utils/Cloning.h"
+#include "SVF-LLVM/ICFGBuilder.h"
+#include "Graphs/CallGraph.h"
+#include "Util/CallGraphBuilder.h"
 
 using namespace std;
 using namespace SVF;
@@ -94,6 +97,15 @@ LLVMModuleSet::~LLVMModuleSet()
 ObjTypeInference* LLVMModuleSet::getTypeInference()
 {
     return typeInference;
+}
+
+DominatorTree& LLVMModuleSet::getDomTree(const SVF::Function* fun)
+{
+    auto it = FunToDominatorTree.find(fun);
+    if(it != FunToDominatorTree.end()) return it->second;
+    DominatorTree& dt = FunToDominatorTree[fun];
+    dt.recalculate(const_cast<Function&>(*fun));
+    return dt;
 }
 
 SVFModule* LLVMModuleSet::buildSVFModule(Module &mod)
@@ -166,6 +178,25 @@ void LLVMModuleSet::build()
 
     createSVFDataStructure();
     initSVFFunction();
+
+
+    ICFGBuilder icfgbuilder;
+    icfg = icfgbuilder.build();
+
+    CallGraphBuilder callGraphBuilder;
+    callgraph = callGraphBuilder.buildSVFIRCallGraph(svfModule);
+    for (const auto& func : svfModule->getFunctionSet())
+    {
+        SVFFunction* svffunc = const_cast<SVFFunction*>(func);
+        svffunc->setCallGraphNode(callgraph->getCallGraphNode(func));
+    }
+
+    for (const auto& it : *callgraph)
+    {
+        addFunctionMap(
+            SVFUtil::cast<Function>(getLLVMValue(it.second->getFunction())),
+            it.second);
+    }
 }
 
 void LLVMModuleSet::createSVFDataStructure()
@@ -276,16 +307,10 @@ void LLVMModuleSet::createSVFFunction(const Function* func)
             SVFInstruction* svfInst = nullptr;
             if (const CallBase* call = SVFUtil::dyn_cast<CallBase>(&inst))
             {
-                if (cppUtil::isVirtualCallSite(call))
-                    svfInst = new SVFVirtualCallInst(
-                        getSVFType(call->getType()), svfBB,
-                        call->getFunctionType()->isVarArg(),
-                        inst.isTerminator());
-                else
-                    svfInst = new SVFCallInst(
-                        getSVFType(call->getType()), svfBB,
-                        call->getFunctionType()->isVarArg(),
-                        inst.isTerminator());
+                svfInst = new SVFCallInst(
+                    getSVFType(call->getType()), svfBB,
+                    call->getFunctionType()->isVarArg(),
+                    inst.isTerminator());
             }
             else
             {
@@ -365,12 +390,6 @@ void LLVMModuleSet::initSVFBasicBlock(const Function* func)
                 {
                     svfcall->setCalledOperand(getSVFValue(called_llvmval));
                 }
-                if(SVFVirtualCallInst* virtualCall = SVFUtil::dyn_cast<SVFVirtualCallInst>(svfcall))
-                {
-                    virtualCall->setVtablePtr(getSVFValue(cppUtil::getVCallVtblPtr(call)));
-                    virtualCall->setFunIdxInVtable(cppUtil::getVCallIdx(call));
-                    virtualCall->setFunNameOfVirtualCall(cppUtil::getFunNameOfVCallSite(call));
-                }
                 for(u32_t i = 0; i < call->arg_size(); i++)
                 {
                     SVFValue* svfval = getSVFValue(call->getArgOperand(i));
@@ -397,9 +416,8 @@ void LLVMModuleSet::initDomTree(SVFFunction* svffun, const Function* fun)
     if (fun->isDeclaration())
         return;
     //process and stored dt & df
-    DominatorTree dt;
     DominanceFrontier df;
-    dt.recalculate(const_cast<Function&>(*fun));
+    DominatorTree& dt = getDomTree(fun);
     df.analyze(dt);
     LoopInfo loopInfo = LoopInfo(dt);
     PostDominatorTree pdt = PostDominatorTree(const_cast<Function&>(*fun));
@@ -686,8 +704,7 @@ std::vector<const Function* > LLVMModuleSet::getLLVMGlobalFunctions(const Global
 
                 if (priority && func)
                 {
-                    queue.push(LLVMGlobalFunction(priority
-                                                  ->getZExtValue(),
+                    queue.push(LLVMGlobalFunction(LLVMUtil::getIntegerValue(priority).second,
                                                   func));
                 }
             }
@@ -1202,6 +1219,12 @@ void LLVMModuleSet::dumpModulesToFile(const std::string& suffix)
     }
 }
 
+void LLVMModuleSet::addFunctionMap(const Function* func, CallGraphNode* svfFunc)
+{
+    LLVMFunc2CallGraphNode[func] = svfFunc;
+    addToLLVMVal2SVFVarMap(func, svfFunc);
+}
+
 void LLVMModuleSet::setValueAttr(const Value* val, SVFValue* svfvalue)
 {
     SVFValue2LLVMValue[svfvalue] = val;
@@ -1230,7 +1253,8 @@ void LLVMModuleSet::setValueAttr(const Value* val, SVFValue* svfvalue)
     svfvalue->setSourceLoc(LLVMUtil::getSourceLoc(val));
 }
 
-void LLVMModuleSet::setValueAttr(const SVF::Value* val, SVF::SVFBaseNode* svfBaseNode)
+void LLVMModuleSet::addToLLVMVal2SVFVarMap(const Value* val,
+        SVFBaseNode* svfBaseNode)
 {
     SVFBaseNode2LLVMValue[svfBaseNode] = val;
     svfBaseNode->setSourceLoc(LLVMUtil::getSourceLoc(val));

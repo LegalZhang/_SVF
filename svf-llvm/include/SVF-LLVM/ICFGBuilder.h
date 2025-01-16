@@ -58,42 +58,15 @@ private:
 public:
     typedef FIFOWorkList<const Instruction*> WorkList;
 
-    ICFGBuilder(ICFG* i): icfg(i)
-    {
+    ICFGBuilder() = default;
 
-    }
-    void build();
+    ICFG* build();
 
 private:
 
-    LLVMModuleSet* llvmModuleSet()
+    inline LLVMModuleSet* llvmModuleSet()
     {
         return LLVMModuleSet::getLLVMModuleSet();
-    }
-
-    CSToRetNodeMapTy& csToRetNodeMap()
-    {
-        return llvmModuleSet()->CSToRetNodeMap;
-    }
-
-    CSToCallNodeMapTy& csToCallNodeMap()
-    {
-        return llvmModuleSet()->CSToCallNodeMap;
-    }
-
-    InstToBlockNodeMapTy& instToBlockNodeMap()
-    {
-        return llvmModuleSet()->InstToBlockNodeMap;
-    }
-
-    FunToFunEntryNodeMapTy& funToFunEntryNodeMap()
-    {
-        return llvmModuleSet()->FunToFunEntryNodeMap;
-    }
-
-    FunToFunExitNodeMapTy& funToFunExitNodeMap()
-    {
-        return llvmModuleSet()->FunToFunExitNodeMap;
     }
 
 private:
@@ -102,7 +75,7 @@ private:
     ///@{
     void processFunEntry(const Function*  fun, WorkList& worklist);
 
-    void processNoPrecessorBasicBlocks(const Function*  fun, WorkList& worklist);
+    void processUnreachableFromEntry(const Function*  fun, WorkList& worklist);
 
     void processFunBody(WorkList& worklist);
 

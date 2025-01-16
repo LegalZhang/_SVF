@@ -35,6 +35,7 @@
 namespace SVF
 {
 class CommonCHGraph;
+class CallGraph;
 /*!
  * SVF Intermediate representation, representing variables and statements as a Program Assignment Graph (PAG)
  * Variables as nodes and statements as edges.
@@ -98,6 +99,7 @@ private:
     ICFG* icfg; // ICFG
     CommonCHGraph* chgraph; // class hierarchy graph
     CallSiteSet callSiteSet; /// all the callsites of a program
+    CallGraph* callGraph; /// call graph
 
     static std::unique_ptr<SVFIR> pag;	///< Singleton pattern here to enable instance of SVFIR can only be created once.
 
@@ -182,6 +184,18 @@ public:
         assert(chgraph && "empty ICFG! Build SVF IR first!");
         return chgraph;
     }
+
+    /// Set/Get CG
+    inline void setCallGraph(CallGraph* c)
+    {
+        callGraph = c;
+    }
+    inline CallGraph* getCallGraph()
+    {
+        assert(callGraph && "empty CallGraph! Build SVF IR first!");
+        return callGraph;
+    }
+
     /// Get/set methods to get SVFStmts based on their kinds and ICFGNodes
     //@{
     /// Get edges set according to its kind
@@ -387,6 +401,27 @@ public:
         else
             return nullptr;
     }
+
+    inline const BaseObjVar* getBaseObject(NodeID id) const
+    {
+        const SVFVar* node = getGNode(id);
+        if(const GepObjVar* gepObjVar = SVFUtil::dyn_cast<GepObjVar>(node))
+            return SVFUtil::dyn_cast<BaseObjVar>(
+                       getGNode(gepObjVar->getBaseNode()));
+        else
+            return SVFUtil::dyn_cast<BaseObjVar>(node);
+    }
+
+    inline const ValVar* getBaseValVar(NodeID id) const
+    {
+        const SVFVar* node = getGNode(id);
+        if(const GepValVar* gepVar = SVFUtil::dyn_cast<GepValVar>(node))
+            return SVFUtil::dyn_cast<ValVar>(
+                       getGNode(gepVar->getBaseNode()));
+        else
+            return SVFUtil::dyn_cast<ValVar>(node);
+    }
+
     inline const MemObj*getObject(const ObjVar* node) const
     {
         return node->getMemObj();
@@ -508,7 +543,7 @@ private:
         funRetMap[fun] = ret;
     }
     /// Add callsite arguments
-    inline void addCallSiteArgs(CallICFGNode* callBlockNode,const SVFVar* arg)
+    inline void addCallSiteArgs(CallICFGNode* callBlockNode,const ValVar* arg)
     {
         callBlockNode->addActualParms(arg);
         callSiteArgsListMap[callBlockNode].push_back(arg);
@@ -531,11 +566,58 @@ private:
     /// add node into SVFIR
     //@{
     /// Add a value (pointer) node
-    inline NodeID addValNode(const SVFValue* val, NodeID i, const SVFBaseNode* gNode)
+    inline NodeID addValNode(const SVFValue* val, NodeID i, const ICFGNode* icfgNode)
     {
-        SVFVar *node = new ValVar(val,i, ValVar::ValNode, gNode);
+        SVFVar *node = new ValVar(val,i, ValVar::ValNode, icfgNode);
         return addValNode(val, node, i);
     }
+
+    NodeID addFunValNode(NodeID i, const ICFGNode* icfgNode, const CallGraphNode* callGraphNode)
+    {
+        FunValVar* node = new FunValVar(i, icfgNode, callGraphNode);
+        return addValNode(nullptr, node, i);
+    }
+
+    NodeID addArgValNode(NodeID i, u32_t argNo, const ICFGNode* icfgNode, const CallGraphNode* callGraphNode, bool isUncalled = false)
+    {
+        ArgValVar* node =
+            new ArgValVar(i, argNo, icfgNode, callGraphNode, isUncalled);
+        return addValNode(nullptr, node, i);
+    }
+
+    inline NodeID addConstantFPValNode(const SVFValue* curInst, const NodeID i, double dval,
+                                       const ICFGNode* icfgNode)
+    {
+        SVFVar* node = new ConstantFPValVar(curInst,  i, dval, icfgNode);
+        return addNode(node, i);
+    }
+
+    inline NodeID addConstantIntValNode(const SVFValue* curInst, NodeID i, const std::pair<s64_t, u64_t>& intValue,
+                                        const ICFGNode* icfgNode)
+    {
+        SVFVar* node = new ConstantIntValVar(curInst, i, intValue.first, intValue.second, icfgNode);
+        return addNode(node, i);
+    }
+
+    inline NodeID addConstantNullPtrValNode(const SVFValue* curInst, const NodeID i, const ICFGNode* icfgNode)
+    {
+        SVFVar* node = new ConstantNullPtrValVar(curInst, i, icfgNode);
+        return addNode(node, i);
+    }
+
+    inline NodeID addGlobalValueValNode(const SVFValue* curInst, const NodeID i, const ICFGNode* icfgNode)
+    {
+        SVFVar* node = new GlobalValVar(curInst, i, icfgNode);
+        return addNode(node, i);
+    }
+
+    inline NodeID addConstantDataValNode(const SVFValue* curInst, const NodeID i, const ICFGNode* icfgNode)
+    {
+        SVFVar* node = new ConstantDataValVar(curInst, i, icfgNode);
+        return addNode(node, i);
+    }
+
+
     /// Add a memory obj node
     inline NodeID addObjNode(const SVFValue* val, NodeID i)
     {
@@ -543,16 +625,92 @@ private:
         assert(mem->getId() == i && "not same object id?");
         return addFIObjNode(mem);
     }
-    /// Add a unique return node for a procedure
-    inline NodeID addRetNode(const SVFFunction* val, NodeID i)
+
+    /**
+     * Creates and adds a heap object node to the SVFIR
+     */
+    inline NodeID addHeapObjNode(const SVFValue* val, NodeID i, const SVFFunction* f)
     {
-        SVFVar *node = new RetPN(val,i);
-        return addRetNode(val, node, i);
+        const MemObj* mem = getMemObj(val);
+        assert(mem->getId() == i && "not same object id?");
+        memToFieldsMap[i].set(i);
+        HeapObjVar *node = new HeapObjVar(i, mem, val->getType(), f);
+        return addObjNode(val, node, i);
+    }
+
+    /**
+     * Creates and adds a stack object node to the SVFIR
+     */
+    inline NodeID addStackObjNode(const SVFValue* val, NodeID i, const SVFFunction* f)
+    {
+        const MemObj* mem = getMemObj(val);
+        assert(mem->getId() == i && "not same object id?");
+        memToFieldsMap[i].set(i);
+        StackObjVar *node = new  StackObjVar(i, mem, val->getType(), f);
+        return addObjNode(val, node, i);
+    }
+
+    NodeID addFunObjNode(NodeID id, const CallGraphNode* callGraphNode);
+
+
+    inline NodeID addConstantFPObjNode(const SVFValue* curInst, NodeID i, double dval)
+    {
+        const MemObj* mem = getMemObj(curInst);
+        NodeID base = mem->getId();
+        memToFieldsMap[base].set(mem->getId());
+        ConstantFPObjVar* node = new ConstantFPObjVar(curInst, i, dval, mem);
+        return addObjNode(curInst, node, mem->getId());
+    }
+
+
+    inline NodeID addConstantIntObjNode(const SVFValue* curInst, NodeID i, const std::pair<s64_t, u64_t>& intValue)
+    {
+        const MemObj* mem = getMemObj(curInst);
+        NodeID base = mem->getId();
+        memToFieldsMap[base].set(mem->getId());
+        ConstantIntObjVar* node =
+            new ConstantIntObjVar(curInst, i, intValue.first, intValue.second,  mem);
+        return addObjNode(curInst, node, mem->getId());
+    }
+
+
+    inline NodeID addConstantNullPtrObjNode(const SVFValue* curInst, const NodeID i)
+    {
+        const MemObj* mem = getMemObj(curInst);
+        NodeID base = mem->getId();
+        memToFieldsMap[base].set(mem->getId());
+        ConstantNullPtrObjVar* node = new ConstantNullPtrObjVar(curInst, mem->getId(), mem);
+        return addObjNode(mem->getValue(), node, mem->getId());
+    }
+
+    inline NodeID addGlobalValueObjNode(const SVFValue* curInst, const NodeID i)
+    {
+        const MemObj* mem = getMemObj(curInst);
+        NodeID base = mem->getId();
+        memToFieldsMap[base].set(mem->getId());
+        GlobalObjVar* node = new GlobalObjVar(curInst, mem->getId(), mem);
+        return addObjNode(mem->getValue(), node, mem->getId());
+    }
+
+    inline NodeID addConstantDataObjNode(const SVFValue* curInst, const NodeID i)
+    {
+        const MemObj* mem = getMemObj(curInst);
+        NodeID base = mem->getId();
+        memToFieldsMap[base].set(mem->getId());
+        ConstantDataObjVar* node = new ConstantDataObjVar(curInst, mem->getId(), mem);
+        return addObjNode(mem->getValue(), node, mem->getId());
+    }
+
+    /// Add a unique return node for a procedure
+    inline NodeID addRetNode(NodeID i, const CallGraphNode* callGraphNode)
+    {
+        SVFVar *node = new RetPN(i, callGraphNode);
+        return addRetNode(callGraphNode, node, i);
     }
     /// Add a unique vararg node for a procedure
-    inline NodeID addVarargNode(const SVFFunction* val, NodeID i)
+    inline NodeID addVarargNode(NodeID i, const CallGraphNode* val)
     {
-        SVFVar *node = new VarArgPN(val,i);
+        SVFVar *node = new VarArgPN(i, val);
         return addNode(node,i);
     }
 
@@ -562,6 +720,7 @@ private:
     NodeID addGepObjNode(const MemObj* obj, const APOffset& apOffset, const NodeID gepId);
     /// Add a field-insensitive node, this method can only invoked by getFIGepObjNode
     NodeID addFIObjNode(const MemObj* obj);
+
     //@}
 
     ///  Add a dummy value/object node according to node ID (llvm value is null)
@@ -614,7 +773,7 @@ private:
         return addNode(node, i);
     }
     /// Add a unique return node for a procedure
-    inline NodeID addRetNode(const SVFFunction*, SVFVar *node, NodeID i)
+    inline NodeID addRetNode(const CallGraphNode*, SVFVar *node, NodeID i)
     {
         return addNode(node,i);
     }

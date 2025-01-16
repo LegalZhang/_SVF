@@ -30,6 +30,7 @@
 #include "SVFIR/SVFVariables.h"
 #include "Util/Options.h"
 #include "Util/SVFUtil.h"
+#include "Graphs/CallGraph.h"
 
 using namespace SVF;
 using namespace SVFUtil;
@@ -39,24 +40,26 @@ using namespace SVFUtil;
  * SVFVar constructor
  */
 SVFVar::SVFVar(const SVFValue* val, NodeID i, PNODEK k) :
-    GenericPAGNodeTy(i,k), value(val)
+    GenericPAGNodeTy(i,k), value(val), func(nullptr)
 {
     assert( ValNode <= k && k <= DummyObjNode && "new SVFIR node kind?");
     switch (k)
     {
     case ValNode:
+    case ArgNode:
+    case ConstantDataValNode:
+    case GlobalValNode:
+    case BlackHoleNode:
+    case ConstantFPValNode:
+    case ConstantIntValNode:
+    case ConstantNullptrValNode:
     case GepValNode:
     {
         assert(val != nullptr && "value is nullptr for ValVar or GepValNode");
         isPtr = val->getType()->isPointerTy();
         break;
     }
-    case RetNode:
-    {
-        assert(val != nullptr && "value is nullptr for RetNode");
-        isPtr = SVFUtil::cast<SVFFunction>(val)->getReturnType()->isPointerTy();
-        break;
-    }
+    case FunValNode:
     case VarargNode:
     case DummyValNode:
     {
@@ -65,12 +68,25 @@ SVFVar::SVFVar(const SVFValue* val, NodeID i, PNODEK k) :
     }
     case ObjNode:
     case GepObjNode:
-    case FIObjNode:
+    case BaseObjNode:
+    case ConstantDataObjNode:
+    case GlobalObjNode:
+    case ConstantFPObjNode:
+    case ConstantIntObjNode:
+    case ConstantNullptrObjNode:
     case DummyObjNode:
     {
         isPtr = true;
         if(val)
             isPtr = val->getType()->isPointerTy();
+        break;
+    }
+    case RetNode:
+    case FunObjNode:
+    case HeapObjNode:
+    case StackObjNode:
+    {
+        // to be completed in derived class
         break;
     }
     default:
@@ -85,8 +101,6 @@ bool SVFVar::isIsolatedNode() const
         return true;
     else if (isConstDataOrAggDataButNotNullPtr())
         return true;
-    else if (value && SVFUtil::isa<SVFFunction>(value))
-        return SVFUtil::cast<SVFFunction>(value)->isIntrinsic();
     else
         return false;
 }
@@ -131,6 +145,39 @@ const std::string ObjVar::toString() const
     return rawstr.str();
 }
 
+ArgValVar::ArgValVar(NodeID i, u32_t argNo, const ICFGNode* icn,
+                     const SVF::CallGraphNode* callGraphNode, bool isUncalled,
+                     SVF::SVFVar::PNODEK ty)
+    : ValVar(callGraphNode->getFunction()->getArg(argNo), i, ty, icn),
+      cgNode(callGraphNode), argNo(argNo), uncalled(isUncalled)
+{
+    isPtr =
+        callGraphNode->getFunction()->getArg(argNo)->getType()->isPointerTy();
+}
+
+const SVFFunction* ArgValVar::getFunction() const
+{
+    return getParent();
+}
+
+const SVFFunction* ArgValVar::getParent() const
+{
+    return cgNode->getFunction();
+}
+
+const std::string ArgValVar::toString() const
+{
+    std::string str;
+    std::stringstream rawstr(str);
+    rawstr << "ArgValVar ID: " << getId();
+    if (Options::ShowSVFIRValue())
+    {
+        rawstr << "\n";
+        rawstr << valueOnlyToString();
+    }
+    return rawstr.str();
+}
+
 const std::string GepValVar::toString() const
 {
     std::string str;
@@ -142,6 +189,21 @@ const std::string GepValVar::toString() const
         rawstr << value->toString();
     }
     return rawstr.str();
+}
+
+RetPN::RetPN(NodeID i, const CallGraphNode* node) : ValVar(i, RetNode), callGraphNode(node)
+{
+    isPtr = node->getFunction()->getReturnType()->isPointerTy();
+}
+
+const SVFFunction* RetPN::getFunction() const
+{
+    return callGraphNode->getFunction();
+}
+
+const std::string RetPN::getValueName() const
+{
+    return callGraphNode->getName() + "_ret";
 }
 
 const std::string GepObjVar::toString() const
@@ -157,11 +219,11 @@ const std::string GepObjVar::toString() const
     return rawstr.str();
 }
 
-const std::string FIObjVar::toString() const
+const std::string BaseObjVar::toString() const
 {
     std::string str;
     std::stringstream rawstr(str);
-    rawstr << "FIObjVar ID: " << getId() << " (base object)";
+    rawstr << "BaseObjVar ID: " << getId() << " (base object)";
     if (Options::ShowSVFIRValue())
     {
         rawstr << "\n";
@@ -170,19 +232,246 @@ const std::string FIObjVar::toString() const
     return rawstr.str();
 }
 
+HeapObjVar::HeapObjVar(NodeID i, const MemObj* mem, const SVFType* svfType,
+                       const SVFFunction* f, PNODEK ty)
+    : BaseObjVar(mem->getValue(), i, mem, ty)
+{
+    isPtr = svfType->isPointerTy();
+    func = f;
+}
+
+const std::string HeapObjVar::toString() const
+{
+    std::string str;
+    std::stringstream rawstr(str);
+    rawstr << "HeapObjVar ID: " << getId();
+    if (Options::ShowSVFIRValue())
+    {
+        rawstr << "\n";
+        rawstr << valueOnlyToString();
+    }
+    return rawstr.str();
+}
+
+StackObjVar::StackObjVar(NodeID i, const MemObj* mem, const SVFType* svfType, const SVFFunction* f, PNODEK ty)
+    : BaseObjVar(mem->getValue(), i, mem, ty)
+{
+    isPtr = svfType->isPointerTy();
+    func = f;
+}
+
+const std::string StackObjVar::toString() const
+{
+    std::string str;
+    std::stringstream rawstr(str);
+    rawstr << "StackObjVar ID: " << getId();
+    if (Options::ShowSVFIRValue())
+    {
+        rawstr << "\n";
+        rawstr << valueOnlyToString();
+    }
+    return rawstr.str();
+}
+
+
+
+FunValVar::FunValVar(NodeID i, const ICFGNode* icn, const CallGraphNode* cgn, PNODEK ty)
+    : ValVar(cgn->getFunction(), i, ty, icn), callGraphNode(cgn)
+{
+    isPtr = cgn->getFunction()->getType()->isPointerTy();
+}
+
+const std::string FunValVar::toString() const
+{
+    std::string str;
+    std::stringstream rawstr(str);
+    rawstr << "FunValVar ID: " << getId();
+    if (Options::ShowSVFIRValue())
+    {
+        rawstr << "\n";
+        rawstr << callGraphNode->getName();
+    }
+    return rawstr.str();
+}
+
+const std::string ConstantDataValVar::toString() const
+{
+    std::string str;
+    std::stringstream rawstr(str);
+    rawstr << "ConstantDataValNode ID: " << getId();
+    if (Options::ShowSVFIRValue())
+    {
+        rawstr << "\n";
+        rawstr << valueOnlyToString();
+    }
+    return rawstr.str();
+}
+
+const std::string GlobalValVar::toString() const
+{
+    std::string str;
+    std::stringstream rawstr(str);
+    rawstr << "GlobalValVar ID: " << getId();
+    if (Options::ShowSVFIRValue())
+    {
+        rawstr << "\n";
+        rawstr << valueOnlyToString();
+    }
+    return rawstr.str();
+}
+
+const std::string ConstantFPValVar::toString() const
+{
+    std::string str;
+    std::stringstream rawstr(str);
+    rawstr << "ConstantFPValNode ID: " << getId();
+    if (Options::ShowSVFIRValue())
+    {
+        rawstr << "\n";
+        rawstr << valueOnlyToString();
+    }
+    return rawstr.str();
+}
+
+const std::string ConstantIntValVar::toString() const
+{
+    std::string str;
+    std::stringstream rawstr(str);
+    rawstr << "ConstantIntValNode ID: " << getId();
+    if (Options::ShowSVFIRValue())
+    {
+        rawstr << "\n";
+        rawstr << valueOnlyToString();
+    }
+    return rawstr.str();
+}
+
+const std::string ConstantNullPtrValVar::toString() const
+{
+    std::string str;
+    std::stringstream rawstr(str);
+    rawstr << "ConstantNullPtrValVar ID: " << getId();
+    if (Options::ShowSVFIRValue())
+    {
+        rawstr << "\n";
+        rawstr << valueOnlyToString();
+    }
+    return rawstr.str();
+}
+
+const std::string GlobalObjVar::toString() const
+{
+    std::string str;
+    std::stringstream rawstr(str);
+    rawstr << "GlobalObjNode ID: " << getId();
+    if (Options::ShowSVFIRValue())
+    {
+        rawstr << "\n";
+        rawstr << valueOnlyToString();
+    }
+    return rawstr.str();
+}
+
+const std::string ConstantDataObjVar::toString() const
+{
+    std::string str;
+    std::stringstream rawstr(str);
+    rawstr << "ConstantDataObjVar ID: " << getId();
+    if (Options::ShowSVFIRValue())
+    {
+        rawstr << "\n";
+        rawstr << valueOnlyToString();
+    }
+    return rawstr.str();
+}
+
+const std::string ConstantFPObjVar::toString() const
+{
+    std::string str;
+    std::stringstream rawstr(str);
+    rawstr << "ConstantFPObjVar ID: " << getId();
+    if (Options::ShowSVFIRValue())
+    {
+        rawstr << "\n";
+        rawstr << valueOnlyToString();
+    }
+    return rawstr.str();
+}
+
+const std::string ConstantIntObjVar::toString() const
+{
+    std::string str;
+    std::stringstream rawstr(str);
+    rawstr << "ConstantIntObjVar ID: " << getId();
+    if (Options::ShowSVFIRValue())
+    {
+        rawstr << "\n";
+        rawstr << valueOnlyToString();
+    }
+    return rawstr.str();
+}
+
+const std::string ConstantNullPtrObjVar::toString() const
+{
+    std::string str;
+    std::stringstream rawstr(str);
+    rawstr << "ConstantNullPtrObjVar ID: " << getId();
+    if (Options::ShowSVFIRValue())
+    {
+        rawstr << "\n";
+        rawstr << valueOnlyToString();
+    }
+    return rawstr.str();
+}
+
+FunObjVar::FunObjVar(NodeID i, const MemObj* mem, const CallGraphNode* cgNode,
+                     PNODEK ty)
+    : BaseObjVar(mem->getValue(), i, mem, ty), callGraphNode(cgNode)
+{
+    isPtr = callGraphNode->getFunction()->getType()->isPointerTy();
+}
+
+bool FunObjVar::isIsolatedNode() const
+{
+    return callGraphNode->getFunction()->isIntrinsic();
+}
+
+const std::string FunObjVar::toString() const
+{
+    std::string str;
+    std::stringstream rawstr(str);
+    rawstr << "FunObjVar ID: " << getId() << " (base object)";
+    if (Options::ShowSVFIRValue())
+    {
+        rawstr << "\n";
+        rawstr << callGraphNode->getName();
+    }
+    return rawstr.str();
+}
+
 const std::string RetPN::toString() const
 {
     std::string str;
     std::stringstream rawstr(str);
-    rawstr << "RetPN ID: " << getId() << " unique return node for function " << SVFUtil::cast<SVFFunction>(value)->getName();
+    rawstr << "RetPN ID: " << getId() << " unique return node for function " << callGraphNode->getName();
     return rawstr.str();
+}
+
+const SVFFunction* VarArgPN::getFunction() const
+{
+    return callGraphNode->getFunction();
+}
+
+const std::string VarArgPN::getValueName() const
+{
+    return callGraphNode->getName() + "_vararg";
 }
 
 const std::string VarArgPN::toString() const
 {
     std::string str;
     std::stringstream rawstr(str);
-    rawstr << "VarArgPN ID: " << getId() << " Var arg node for function " << SVFUtil::cast<SVFFunction>(value)->getName();
+    rawstr << "VarArgPN ID: " << getId() << " Var arg node for function " << callGraphNode->getName();
     return rawstr.str();
 }
 
@@ -211,4 +500,3 @@ bool SVFVar::isConstDataOrAggDataButNotNullPtr() const
     else
         return false;
 }
-

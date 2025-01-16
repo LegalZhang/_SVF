@@ -47,7 +47,7 @@ protected:
     bool isStrongUpdate(const StoreCGEdge* store, NodeID& singleton);
 
     SVFGBuilder memSSA;
-    AndersenWaveDiff *ander;
+    AndersenWaveDiff* ander;
     SVFG* svfg;
     FSConsG* fsconsCG;
 };

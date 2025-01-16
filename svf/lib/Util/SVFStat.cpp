@@ -29,6 +29,7 @@
 
 #include "Util/Options.h"
 #include "Util/SVFStat.h"
+#include "Graphs/CallGraph.h"
 
 using namespace SVF;
 using namespace std;
@@ -141,10 +142,16 @@ void SVFStat::performStat()
                 numOfFunction++;
             if(mem->isGlobalObj())
                 numOfGlobal++;
-            if(mem->isStack())
+            if (pag->getBaseObject(obj->getId()) &&
+                    SVFUtil::isa<StackObjVar>(
+                        pag->getBaseObject(obj->getId())))
                 numOfStack++;
-            if(mem->isHeap())
+            if (pag->getBaseObject(obj->getId()) &&
+                    SVFUtil::isa<HeapObjVar, DummyObjVar>(
+                        pag->getBaseObject(obj->getId())))
+            {
                 numOfHeap++;
+            }
             if(mem->isVarArray())
                 numOfHasVarArray++;
             if(mem->isVarStruct())
@@ -214,13 +221,12 @@ void SVFStat::performStat()
 
 void SVFStat::branchStat()
 {
-    SVFModule* module = SVFIR::getPAG()->getModule();
     u32_t numOfBB_2Succ = 0;
     u32_t numOfBB_3Succ = 0;
-    for (SVFModule::const_iterator funIter = module->begin(), funEiter = module->end();
-            funIter != funEiter; ++funIter)
+    CallGraph* svfirCallGraph = PAG::getPAG()->getCallGraph();
+    for (const auto& item: *svfirCallGraph)
     {
-        const SVFFunction* func = *funIter;
+        const SVFFunction* func = item.second->getFunction();
         for (SVFFunction::const_iterator bbIt = func->begin(), bbEit = func->end();
                 bbIt != bbEit; ++bbIt)
         {

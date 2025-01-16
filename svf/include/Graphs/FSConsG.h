@@ -11,44 +11,6 @@
 namespace SVF
 {
 
-/*
-class FSLoadCGEdge : public LoadCGEdge
-{
-public:
-    /// Constructor
-    FSLoadCGEdge(ConstraintNode* s, ConstraintNode* d, EdgeID id, NodeID fsID) : LoadCGEdge(s, d, id), fsID_(fsID)
-    {
-    }
-
-    /// Getter for fsID
-    NodeID getSVFGID() const {
-        return fsID_;
-    }
-
-private:
-    NodeID fsID_;
-
-};
-
-class FSStoreCGEdge : public StoreCGEdge
-{
-public:
-    /// Constructor
-    FSStoreCGEdge(ConstraintNode* s, ConstraintNode* d, EdgeID id, NodeID fsID) : StoreCGEdge(s, d, id), fsID_(fsID)
-    {
-    }
-
-    /// Getter for fsID
-    NodeID getSVFGID() const {
-        return fsID_;
-    }
-
-private:
-    NodeID fsID_;
-
-};
-*/
-
 /*!
  * Constraint graph built from SVFG
  */
