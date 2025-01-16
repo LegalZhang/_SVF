@@ -75,9 +75,9 @@ void FlowSensitive::initialize()
     setGraph(svfg);
     //AndersenWaveDiff::releaseAndersenWaveDiff();
 
-    consCG = new FSConsG(svfg);
+    fsconsCG = new FSConsG(svfg);
     if (Options::SVFG2CG())
-        consCG->dump("fsconsg");
+        fsconsCG->dump("fsconsg");
 }
 void FlowSensitive::solveConstraints()
 {

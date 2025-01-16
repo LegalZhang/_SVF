@@ -81,6 +81,20 @@ protected:
     PairToIDMap pairToidMap;
 
     void buildSVFG2CG(SVFG* svfg);
+
+public:
+    /// Dump graph into dot file
+    void dump(std::string name);
+    /// Print CG into terminal
+    void print();
+
+    /// View graph from the debugger.
+    void view();
+};
+
+template<>
+struct GenericGraphTraits<SVF::FSConsG*> : public GenericGraphTraits<SVF::ConstraintGraph*> {
+    using NodeRef = SVF::ConstraintNode*;
 };
 
 } // End namespace SVF

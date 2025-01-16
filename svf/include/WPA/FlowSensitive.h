@@ -35,6 +35,7 @@
 #include "MemoryModel/PointerAnalysisImpl.h"
 #include "MSSA/SVFGBuilder.h"
 #include "WPA/WPAFSSolver.h"
+#include "Graphs/FSConsG.h"
 
 namespace SVF
 {
@@ -279,7 +280,7 @@ protected:
     AndersenWaveDiff *ander;
 
     /// Constraint Graph
-    ConstraintGraph* consCG;
+    FSConsG* fsconsCG;
 
     /// Save candidate mappings for evaluation's sake.
     std::vector<std::pair<hclust_fast_methods, std::vector<NodeID>>> candidateMappings;

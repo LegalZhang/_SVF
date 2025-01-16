@@ -512,6 +512,14 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
 
 }
 
+/*!
+ * Dump flow-sensitive constraint graph
+ */
+void FSConsG::dump(std::string name)
+{
+    GraphPrinter::WriteGraphToFile(outs(), name, this);
+}
+
 /* Flow-Sensitive LoadCGEdge and StoreCGEdge
 FSLoadCGEdge* FSConsG::addFSLoadCGEdge(NodeID src, NodeID dst, NodeID fsID)
 {
