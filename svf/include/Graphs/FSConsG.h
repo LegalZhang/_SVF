@@ -33,8 +33,17 @@ public:
         return pairToidMap.find(nodePair) != pairToidMap.end();
     }
 
-    typedef Map<NodeID, NodePair> IDToPairMap;
-    typedef Map<NodePair, NodeID> PairToIDMap;
+    NodeID getPAGNodeID (NodeID fsconsgid) const
+    {
+        auto it = idTopairMap.find(fsconsgid);
+        if (it != idTopairMap.end()) {
+            return it->second.first;
+        }
+        return fsconsgid;
+    }
+
+    typedef Map<NodeID, NodePair> IDToPairMap; // FSConsGNodeID to (PAGNodeID, SVFGNodeID)
+    typedef Map<NodePair, NodeID> PairToIDMap; // (PAGNodeID, SVFGNodeID) to FSConsGNodeID
 
 protected:
     u32_t totalCGNode;

@@ -8,7 +8,6 @@
 #include "Graphs/SVFG.h"
 #include "Util/Options.h"
 #include "WPA/Andersen.h"
-#include "WPA/FlowSensitive.h"
 
 using namespace SVF;
 using namespace SVFUtil;
@@ -311,8 +310,6 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
 
             NodeID srcNode = pairToidMap[NodePair(i, srcIndirect)];
             NodeID dstNode = pairToidMap[NodePair(i, dstIndirect)];
-            srcNode = dstNode;
-            dstNode = srcNode;
             addCopyCGEdge(srcNode, dstNode);
         }
     }
@@ -327,6 +324,150 @@ void FSConsG::dump(std::string name)
     GraphPrinter::WriteGraphToFile(outs(), name, this);
 }
 
+/*!
+ * GraphTraits specialization for flow-sensitive constraint graph
+ */
+namespace SVF
+{
+template<>
+struct DOTGraphTraits<FSConsG*> : public DOTGraphTraits<SVFIR*>
+{
+
+    typedef ConstraintNode NodeType;
+    DOTGraphTraits(bool isSimple = false) :
+        DOTGraphTraits<SVFIR*>(isSimple)
+    {
+    }
+
+    /// Return name of the graph
+    static std::string getGraphName(FSConsG*)
+    {
+        return "Flow-Sensitive ConstraintG";
+    }
+
+    static bool isNodeHidden(NodeType *n, FSConsG *)
+    {
+        if (Options::ShowHiddenNode()) return false;
+        else return (n->getInEdges().empty() && n->getOutEdges().empty());
+    }
+
+    /// Return label of a VFG node with two display mode
+    /// Either you can choose to display the name of the value or the whole instruction
+    static std::string getNodeLabel(NodeType *n, FSConsG *fs)
+    {
+        ConstraintNode* node = fs->getConstraintNode(n->getId());
+        NodeID pagNodeID = fs->getPAGNodeID(n->getId());
+        PAGNode* pagNode = SVFIR::getPAG()->getGNode(pagNodeID);
+        bool briefDisplay = Options::BriefConsCGDotGraph();
+        bool nameDisplay = true;
+        std::string str;
+        std::stringstream rawstr(str);
+
+        if (briefDisplay)
+        {
+            if (SVFUtil::isa<ValVar>(node))
+            {
+                if (nameDisplay)
+                    rawstr << node->getId() << ":" << pagNode->getValueName();
+                else
+                    rawstr << node->getId();
+            }
+            else
+                rawstr << node->getId();
+        }
+        else
+        {
+            // print the whole value
+            if (!SVFUtil::isa<DummyValVar>(node) && !SVFUtil::isa<DummyObjVar>(node))
+                rawstr << node->toString();
+            else
+                rawstr << node->getId() << ":";
+
+        }
+
+        return rawstr.str();
+    }
+
+    static std::string getNodeAttributes(NodeType *n, FSConsG* fs)
+    {
+        // ConstraintNode* node = fs->getConstraintNode(n->getId());
+        NodeID pagNodeID = fs->getPAGNodeID(n->getId());
+        PAGNode* node = SVFIR::getPAG()->getGNode(pagNodeID);
+        if (SVFUtil::isa<ValVar>(node))
+        {
+            if(SVFUtil::isa<GepValVar>(node))
+                return "shape=hexagon";
+            else if (SVFUtil::isa<DummyValVar>(node))
+                return "shape=diamond";
+            else
+                return "shape=box";
+        }
+        else if (SVFUtil::isa<ObjVar>(node))
+        {
+            if(SVFUtil::isa<GepObjVar>(node))
+                return "shape=doubleoctagon";
+            else if(SVFUtil::isa<BaseObjVar>(node))
+                return "shape=box3d";
+            else if (SVFUtil::isa<DummyObjVar>(node))
+                return "shape=tab";
+            else
+                return "shape=component";
+        }
+        else if (SVFUtil::isa<RetPN>(node))
+        {
+            return "shape=Mrecord";
+        }
+        else if (SVFUtil::isa<VarArgPN>(node))
+        {
+            return "shape=octagon";
+        }
+        else
+        {
+            assert(0 && "no such kind!!");
+        }
+        return "";
+    }
+
+    template<class EdgeIter>
+    static std::string getEdgeAttributes(NodeType*, EdgeIter EI, FSConsG* fs)
+    {
+        ConstraintEdge* edge = *(EI.getCurrent());
+        assert(edge && "No edge found!!");
+        if (edge->getEdgeKind() == ConstraintEdge::Addr)
+        {
+            return "color=green";
+        }
+        else if (edge->getEdgeKind() == ConstraintEdge::Copy)
+        {
+            return "color=black";
+        }
+        else if (edge->getEdgeKind() == ConstraintEdge::NormalGep
+                 || edge->getEdgeKind() == ConstraintEdge::VariantGep)
+        {
+            return "color=purple";
+        }
+        else if (edge->getEdgeKind() == ConstraintEdge::Store)
+        {
+            return "color=blue";
+        }
+        else if (edge->getEdgeKind() == ConstraintEdge::Load)
+        {
+            return "color=red";
+        }
+        else
+        {
+            assert(0 && "No such kind edge!!");
+        }
+        return "";
+    }
+
+    template<class EdgeIter>
+    static std::string getEdgeSourceLabel(NodeType*, EdgeIter)
+    {
+        return "";
+    }
+};
+} // End namespace llvm
 
     /* function-related address-taken nodes
     /// build address-taken constraint nodes
