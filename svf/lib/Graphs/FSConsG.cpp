@@ -365,7 +365,7 @@ struct DOTGraphTraits<FSConsG*> : public DOTGraphTraits<SVFIR*>
 
         if (briefDisplay)
         {
-            if (SVFUtil::isa<ValVar>(node))
+            if (SVFUtil::isa<ValVar>(pagNode))
             {
                 if (nameDisplay)
                     rawstr << node->getId() << ":" << pagNode->getValueName();
@@ -378,7 +378,7 @@ struct DOTGraphTraits<FSConsG*> : public DOTGraphTraits<SVFIR*>
         else
         {
             // print the whole value
-            if (!SVFUtil::isa<DummyValVar>(node) && !SVFUtil::isa<DummyObjVar>(node))
+            if (!SVFUtil::isa<DummyValVar>(pagNode) && !SVFUtil::isa<DummyObjVar>(pagNode))
                 rawstr << node->toString();
             else
                 rawstr << node->getId() << ":";
