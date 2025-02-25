@@ -47,14 +47,6 @@ void FlowSensitiveCG::finalize()
     if (Options::SVFG2CG())
         consCG->dump("fsconsg_final");
 
-    // Debug: Check fsconsCG and svfg before cleanup
-    if (!consCG) {
-        std::cerr << "Error: fsconsCG is null in finalize!" << std::endl;
-    }
-    if (!svfg) {
-        std::cerr << "Error: svfg is null in finalize!" << std::endl;
-    }
-
     BVDataPTAImpl::finalize();
 }
 
