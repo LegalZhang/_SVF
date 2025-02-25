@@ -16,17 +16,8 @@ public:
     /// Constructor
     FlowSensitiveCG(SVFIR* _pag, PTATY type = AndersenFS_WPA, bool alias_check = false) : Andersen(_pag, type) {}
 
-    ~FlowSensitiveCG()
+    ~FlowSensitiveCG() override
     {
-        std::cerr << "Destroying FlowSensitiveCG..." << std::endl;
-        if (fsconsCG) {
-            delete fsconsCG;
-            fsconsCG = nullptr;
-        }
-        if (svfg) {
-            delete svfg;
-            svfg = nullptr;
-        }
     }
 
     /// Initialize analysis
@@ -37,6 +28,18 @@ public:
 protected:
     virtual void solveWorklist() override;
     virtual void processNode(NodeID nodeId) override;
+    // virtual void processAllAddr();
+    // virtual void processAddr(const AddrCGEdge* addr) override;
+    // virtual void collapsePWCNode(NodeID nodeId) override;
+    // bool collapseNodePts(NodeID nodeId);
+    // void collapseFields() override;
+    // bool collapseField(NodeID nodeId);
+    // virtual void mergeNodeToRep(NodeID nodeId,NodeID newRepId) override;
+    // virtual bool processCopy(NodeID node, const ConstraintEdge* edge) override;
+    // virtual bool processGep(NodeID node, const GepCGEdge* edge) override;
+    // virtual bool processGepPts(const PointsTo& pts, const GepCGEdge* edge) override;
+    // virtual void handleCopyGep(ConstraintNode* node) override;
+
     virtual void postProcessNode(NodeID nodeId);
     virtual bool handleStore(NodeID node, const ConstraintEdge* store);
     virtual bool processStore(NodeID node, const ConstraintEdge* store) override;
@@ -49,7 +52,7 @@ protected:
     SVFGBuilder memSSA;
     AndersenWaveDiff* ander;
     SVFG* svfg;
-    FSConsG* fsconsCG;
+    FSConsG* consCG;
 };
 
 } // namespace SVF
