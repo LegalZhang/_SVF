@@ -24,21 +24,35 @@ public:
     virtual void initialize() override;
     /// Finalize analysis
     virtual void finalize() override;
+    /// Solve constraints
+    virtual void solveConstraints() override;
 
 protected:
     virtual void solveWorklist() override;
     virtual void processNode(NodeID nodeId) override;
-    // virtual void processAllAddr();
-    // virtual void processAddr(const AddrCGEdge* addr) override;
-    // virtual void collapsePWCNode(NodeID nodeId) override;
-    // bool collapseNodePts(NodeID nodeId);
-    // void collapseFields() override;
-    // bool collapseField(NodeID nodeId);
+    virtual void processAllAddr();
+    virtual void processAddr(const AddrCGEdge* addr) override;
+    virtual void collapsePWCNode(NodeID nodeId) override;
+    bool collapseNodePts(NodeID nodeId);
+    void collapseFields() override;
+    bool collapseField(NodeID nodeId);
     // virtual void mergeNodeToRep(NodeID nodeId,NodeID newRepId) override;
     // virtual bool processCopy(NodeID node, const ConstraintEdge* edge) override;
     // virtual bool processGep(NodeID node, const GepCGEdge* edge) override;
     // virtual bool processGepPts(const PointsTo& pts, const GepCGEdge* edge) override;
     // virtual void handleCopyGep(ConstraintNode* node) override;
+
+    /// SCC methods
+    //@{
+    inline NodeID sccRepNode(NodeID id) const override
+    {
+        return fsconsCG->sccRepNode(id);
+    }
+    inline NodeBS& sccSubNodes(NodeID repId)
+    {
+        return fsconsCG->sccSubNodes(repId);
+    }
+    //@}
 
     virtual void postProcessNode(NodeID nodeId);
     virtual bool handleStore(NodeID node, const ConstraintEdge* store);
@@ -52,7 +66,7 @@ protected:
     SVFGBuilder memSSA;
     AndersenWaveDiff* ander;
     SVFG* svfg;
-    FSConsG* consCG;
+    FSConsG* fsconsCG;
 };
 
 } // namespace SVF

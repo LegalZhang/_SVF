@@ -9,8 +9,6 @@
 
 using namespace SVF;
 
-constexpr NodeID INVALID_NODE_ID = -1;
-
 /*!
  * Initialize analysis
  */
@@ -27,14 +25,10 @@ void FlowSensitiveCG::initialize()
     svfg = memSSA.buildPTROnlySVFG(ander);
 
     /// Build Flow-Sensitive Constraint Graph
-    consCG = new FSConsG(svfg);
-    if (!consCG) {
-        std::cerr << "Error: Failed to initialize fsconsCG!" << std::endl;
-        return;
-    }
-    setGraph(consCG);
+    fsconsCG = new FSConsG(svfg);
+    setGraph(fsconsCG);
     if (Options::SVFG2CG())
-        consCG->dump("fsconsg_initial");
+        fsconsCG->dump("fsconsg_initial");
 
     /// Initialize worklist
     processAllAddr();
@@ -42,12 +36,63 @@ void FlowSensitiveCG::initialize()
     setDetectPWC(true);   // Standard wave propagation always collapses PWCs
 }
 
+void FlowSensitiveCG::processAllAddr()
+{
+    for (ConstraintGraph::const_iterator nodeIt = fsconsCG->begin(), nodeEit = fsconsCG->end(); nodeIt != nodeEit; nodeIt++)
+    {
+        ConstraintNode * cgNode = nodeIt->second;
+        for (ConstraintNode::const_iterator it = cgNode->incomingAddrsBegin(), eit = cgNode->incomingAddrsEnd();
+                it != eit; ++it)
+            processAddr(SVFUtil::cast<AddrCGEdge>(*it));
+    }
+}
+
+void FlowSensitiveCG::processAddr(const AddrCGEdge* addr)
+{
+    numOfProcessedAddr++;
+
+    NodeID dst = addr->getDstID();
+    NodeID src = addr->getSrcID();
+    if(addPts(dst,src))
+        pushIntoWorklist(dst);
+}
+
 void FlowSensitiveCG::finalize()
 {
     if (Options::SVFG2CG())
-        consCG->dump("fsconsg_final");
+        fsconsCG->dump("fsconsg_final");
 
     BVDataPTAImpl::finalize();
+}
+
+void FlowSensitiveCG::solveConstraints()
+{
+    // Start solving constraints
+    DBOUT(DGENERAL, outs() << SVFUtil::pasMsg("Start Solving Constraints\n"));
+
+    bool limitTimerSet = SVFUtil::startAnalysisLimitTimer(Options::AnderTimeLimit());
+
+    initWorklist();
+    do
+    {
+        numOfIteration++;
+        if (0 == numOfIteration % iterationForPrintStat)
+            printStat();
+
+        reanalyze = false;
+
+        solveWorklist();
+
+        if (updateCallGraph(getIndirectCallsites()))
+            reanalyze = true;
+
+    }
+    while (reanalyze);
+
+    // Analysis is finished, reset the alarm if we set it.
+    SVFUtil::stopAnalysisLimitTimer(limitTimerSet);
+
+    DBOUT(DGENERAL, outs() << SVFUtil::pasMsg("Finish Solving Constraints\n"));
 }
 
 void FlowSensitiveCG::solveWorklist()
@@ -78,6 +123,115 @@ void FlowSensitiveCG::solveWorklist()
     }
 }
 
+/**
+ * Detect and collapse PWC nodes produced by processing gep edges, under the constraint of field limit.
+ */
+inline void FlowSensitiveCG::collapsePWCNode(NodeID nodeId)
+{
+    // If a node is a PWC node, collapse all its points-to target.
+    // collapseNodePts() may change the points-to set of the nodes which have been processed
+    // before, in this case, we may need to re-do the analysis.
+    if (fsconsCG->isPWCNode(nodeId) && collapseNodePts(nodeId))
+        reanalyze = true;
+}
+
+/**
+ * Collapse node's points-to set. Change all points-to elements into field-insensitive.
+ */
+bool FlowSensitiveCG::collapseNodePts(NodeID nodeId)
+{
+    bool changed = false;
+    const PointsTo& nodePts = getPts(nodeId);
+    /// Points to set may be changed during collapse, so use a clone instead.
+    PointsTo ptsClone = nodePts;
+    for (PointsTo::iterator ptsIt = ptsClone.begin(), ptsEit = ptsClone.end(); ptsIt != ptsEit; ptsIt++)
+    {
+        NodeID pagId = fsconsCG->getPAGNodeID(*ptsIt);
+        if (isFieldInsensitive(pagId))
+            continue;
+
+        if (collapseField(pagId))
+            changed = true;
+    }
+    return changed;
+}
+
+inline void FlowSensitiveCG::collapseFields()
+{
+    while (fsconsCG->hasNodesToBeCollapsed())
+    {
+        NodeID node = fsconsCG->getNextCollapseNode();
+        // collapseField() may change the points-to set of the nodes which have been processed
+        // before, in this case, we may need to re-do the analysis.
+        if (collapseField(node))
+            reanalyze = true;
+    }
+}
+
+/**
+ * Collapse field. make struct with the same base as nodeId become field-insensitive.
+ */
+bool FlowSensitiveCG::collapseField(NodeID nodeId)
+{
+    /// Black hole doesn't have structures, no collapse is needed.
+    /// In later versions, instead of using base node to represent the struct,
+    /// we'll create new field-insensitive node. To avoid creating a new "black hole"
+    /// node, do not collapse field for black hole node.
+
+    NodeID pagId = fsconsCG->getPAGNodeID(nodeId);
+
+    if (fsconsCG->isBlkObjOrConstantObj(pagId))
+        return false;
+
+    bool changed = false;
+
+    double start = stat->getClk();
+
+    // set base node field-insensitive.
+    setObjFieldInsensitive(pagId);
+
+    // replace all occurrences of each field with the field-insensitive node
+    NodeID baseId = fsconsCG->getFIObjVar(pagId);
+    NodeID baseRepNodeId = fsconsCG->sccRepNode(baseId);
+    NodeBS & allFields = fsconsCG->getAllFieldsObjVars(baseId);
+    for (NodeBS::iterator fieldIt = allFields.begin(), fieldEit = allFields.end(); fieldIt != fieldEit; fieldIt++)
+    {
+        NodeID fieldId = *fieldIt;
+        if (fieldId != baseId)
+        {
+            // use the reverse pts of this field node to find all pointers point to it
+            const NodeSet revPts = getRevPts(fieldId);
+            for (const NodeID o : revPts)
+            {
+                // change the points-to target from field to base node
+                clearPts(o, fieldId);
+                addPts(o, baseId);
+                pushIntoWorklist(o);
+
+                changed = true;
+            }
+            // merge field node into base node, including edges and pts.
+            NodeID fieldRepNodeId = fsconsCG->sccRepNode(fieldId);
+            mergeNodeToRep(fieldRepNodeId, baseRepNodeId);
+            if (fieldId != baseRepNodeId)
+            {
+                // gep node fieldId becomes redundant if it is merged to its base node who is set as field-insensitive
+                // two node IDs should be different otherwise this field is actually the base and should not be removed.
+                redundantGepNodes.set(fieldId);
+            }
+        }
+    }
+
+    if (fsconsCG->isPWCNode(baseRepNodeId))
+        if (collapseNodePts(baseRepNodeId))
+            changed = true;
+
+    double end = stat->getClk();
+    timeOfCollapse += (end - start) / TIMEINTERVAL;
+
+    return changed;
+}
+
 void FlowSensitiveCG::processNode(NodeID nodeId)
 {
     // This node may be merged during collapseNodePts() which means it is no longer a rep node
@@ -86,7 +240,7 @@ void FlowSensitiveCG::processNode(NodeID nodeId)
         return;
 
     double propStart = stat->getClk();
-    ConstraintNode* node = consCG->getConstraintNode(nodeId);
+    ConstraintNode* node = fsconsCG->getConstraintNode(nodeId);
     handleCopyGep(node);
     double propEnd = stat->getClk();
     timeOfProcessCopyGep += (propEnd - propStart) / TIMEINTERVAL;
@@ -99,7 +253,7 @@ void FlowSensitiveCG::postProcessNode(NodeID nodeId)
 {
     double insertStart = stat->getClk();
 
-    ConstraintNode* node = consCG->getConstraintNode(nodeId);
+    ConstraintNode* node = fsconsCG->getConstraintNode(nodeId);
 
     // handle load
     for (ConstraintNode::const_iterator it = node->outgoingLoadsBegin(), eit = node->outgoingLoadsEnd();
@@ -200,10 +354,11 @@ bool FlowSensitiveCG::processStore(NodeID node, const ConstraintEdge* store)
 
 NodeID FlowSensitiveCG::getAddrDef(NodeID consgid, NodeID svfgid)
 {
-    auto it = consCG->pairToidMap.find(NodePair(consgid, svfgid));
-    if (it == consCG->pairToidMap.end()) {
-        std::cerr << "Error: NodePair(" << consgid << ", " << svfgid << ") not found in pairToidMap!" << std::endl;
-        return INVALID_NODE_ID;
+    auto it = fsconsCG->pairToidMap.find(NodePair(consgid, svfgid));
+    if (it == fsconsCG->pairToidMap.end())
+    {
+        // debug
+        std::cout<<"[FlowSensitiveCG::getAddrDef] NodePair not found: ("<<consgid<<", "<<svfgid<<")"<<std::endl;
     }
     return it->second;
 }
@@ -234,27 +389,6 @@ bool FlowSensitiveCG::isStrongUpdate(const StoreCGEdge* node, NodeID& singleton)
 }
 
 /*
-
-void FlowSensitiveCG::processAllAddr()
-{
-    for (ConstraintGraph::const_iterator nodeIt = fsconsCG->begin(), nodeEit = fsconsCG->end(); nodeIt != nodeEit; nodeIt++)
-    {
-        ConstraintNode * cgNode = nodeIt->second;
-        for (ConstraintNode::const_iterator it = cgNode->incomingAddrsBegin(), eit = cgNode->incomingAddrsEnd();
-                it != eit; ++it)
-            processAddr(SVFUtil::cast<AddrCGEdge>(*it));
-    }
-}
-
-void FlowSensitiveCG::processAddr(const AddrCGEdge* addr)
-{
-    numOfProcessedAddr++;
-
-    NodeID dst = addr->getDstID();
-    NodeID src = addr->getSrcID();
-    if(addPts(dst,src))
-        pushIntoWorklist(dst);
-}
 
 inline void FlowSensitiveCG::collapsePWCNode(NodeID nodeId)
 {

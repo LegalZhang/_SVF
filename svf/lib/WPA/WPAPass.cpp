@@ -41,6 +41,7 @@
 #include "WPA/AndersenPWC.h"
 #include "WPA/FlowSensitive.h"
 #include "WPA/FlowSensitiveCG.h"
+#include "WPA/FlowSensitiveFS.h"
 #include "WPA/Steensgaard.h"
 #include "WPA/TypeAnalysis.h"
 #include "WPA/VersionedFlowSensitive.h"
@@ -103,6 +104,9 @@ void WPAPass::runPointerAnalysis(SVFIR* pag, u32_t kind)
         break;
     case PointerAnalysis::AndersenFS_WPA:
         _pta = new FlowSensitiveCG(pag);
+        break;
+    case PointerAnalysis::AndersenFSCG_WPA:
+        _pta = new FlowSensitiveFS(pag);
         break;
     case PointerAnalysis::Steensgaard_WPA:
         _pta = new Steensgaard(pag);

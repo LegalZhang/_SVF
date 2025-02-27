@@ -42,6 +42,30 @@ public:
         return fsconsgid;
     }
 
+    inline bool insertMappingIntoPairToIDMap(const NodePair &key, NodeID value) {
+        auto ret = pairToidMap.insert({ key, value });
+        if (!ret.second) {
+            assert(ret.first->second == value && "Duplicate key with inconsistent value in pairToidMap");
+            return false;
+        }
+        return true;
+    }
+
+    inline bool insertMappingIntoIDToPairMap(NodeID key, const NodePair &value) {
+        auto ret = idTopairMap.insert({ key, value });
+        if (!ret.second) {
+            assert(ret.first->second == value && "Duplicate key with inconsistent mapping in idTopairMap");
+            return false;
+        }
+        return true;
+    }
+
+    inline void insertConstraintMapping(NodeID pagid, NodeID svfgid, NodeID fsconsgid) {
+        NodePair np(pagid, svfgid);
+        insertMappingIntoPairToIDMap(np, fsconsgid);
+        insertMappingIntoIDToPairMap(fsconsgid, np);
+    }
+
     typedef Map<NodeID, NodePair> IDToPairMap; // FSConsGNodeID to (PAGNodeID, SVFGNodeID)
     typedef Map<NodePair, NodeID> PairToIDMap; // (PAGNodeID, SVFGNodeID) to FSConsGNodeID
 
