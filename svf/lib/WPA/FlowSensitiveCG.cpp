@@ -290,7 +290,8 @@ bool FlowSensitiveCG::handleLoad(NodeID node, const ConstraintEdge* load)
 
 bool FlowSensitiveCG::processLoad(NodeID node, const ConstraintEdge* load)
 {
-    if (pag->isConstantObj(node) || pag->getGNode(load->getDstID())->isPointer() == false)
+    NodeID pagId = fsconsCG->getPAGNodeID(node);
+    if (pag->isConstantObj(pagId) || pag->getGNode(fsconsCG->getPAGNodeID(load->getDstID()))->isPointer() == false)
         return false;
 
     numOfProcessedLoad++;
@@ -323,7 +324,8 @@ bool FlowSensitiveCG::handleStore(NodeID node, const ConstraintEdge* store)
 
 bool FlowSensitiveCG::processStore(NodeID node, const ConstraintEdge* store)
 {
-    if (pag->isConstantObj(node) || pag->getGNode(store->getSrcID())->isPointer() == false)
+    NodeID pagId = fsconsCG->getPAGNodeID(node);
+    if (pag->isConstantObj(pagId) || pag->getGNode(fsconsCG->getPAGNodeID(store->getSrcID()))->isPointer() == false)
         return false;
 
     numOfProcessedStore++;
@@ -386,6 +388,25 @@ bool FlowSensitiveCG::isStrongUpdate(const StoreCGEdge* node, NodeID& singleton)
         }
     }
     return isSU;
+}
+
+CopyCGEdge* ConstraintGraph::addCopyCGEdge(NodeID src, NodeID dst)
+{
+
+    ConstraintNode* srcNode = getConstraintNode(src);
+    ConstraintNode* dstNode = getConstraintNode(dst);
+    if (hasEdge(srcNode, dstNode, ConstraintEdge::Copy) || srcNode == dstNode)
+        return nullptr;
+
+    CopyCGEdge* edge = new CopyCGEdge(srcNode, dstNode, edgeIndex++);
+
+    bool inserted = directEdgeSet.insert(edge).second;
+    (void)inserted; // Suppress warning of unused variable under release build
+    assert(inserted && "new CopyCGEdge not added??");
+
+    srcNode->addOutgoingCopyEdge(edge);
+    dstNode->addIncomingCopyEdge(edge);
+    return edge;
 }
 
 /*

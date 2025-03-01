@@ -27,6 +27,11 @@ public:
     /// Solve constraints
     virtual void solveConstraints() override;
 
+    ConstraintGraph* getFSConsG()
+    {
+        return fsconsCG;
+    }
+
 protected:
     virtual void solveWorklist() override;
     virtual void processNode(NodeID nodeId) override;
@@ -48,7 +53,7 @@ protected:
     {
         return fsconsCG->sccRepNode(id);
     }
-    inline NodeBS& sccSubNodes(NodeID repId)
+    inline NodeBS& sccSubNodes(NodeID repId) override
     {
         return fsconsCG->sccSubNodes(repId);
     }
@@ -62,6 +67,26 @@ protected:
 
     NodeID getAddrDef(NodeID consgid, NodeID svfgid);
     bool isStrongUpdate(const StoreCGEdge* store, NodeID& singleton);
+
+    /// Add copy edge on constraint graph
+    virtual inline bool addCopyEdge(NodeID src, NodeID dst) override
+    {
+        if (fsconsCG->addCopyCGEdge(src, dst))
+        {
+            updatePropaPts(src, dst);
+            return true;
+        }
+        return false;
+    }
+
+    inline void updatePropaPts(NodeID dstId, NodeID srcId)
+    {
+        if (!Options::DiffPts())
+            return;
+        NodeID srcRep = sccRepNode(srcId);
+        NodeID dstRep = sccRepNode(dstId);
+        getDiffPTDataTy()->updatePropaPtsMap(srcRep, dstRep);
+    }
 
     SVFGBuilder memSSA;
     AndersenWaveDiff* ander;

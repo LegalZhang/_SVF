@@ -234,7 +234,7 @@ public:
 
     /// SCC rep/sub nodes methods
     //@{
-    inline NodeID sccRepNode(NodeID id) const
+    virtual inline NodeID sccRepNode(NodeID id) const
     {
         NodeToRepMap::const_iterator it = nodeToRepMap.find(id);
         if(it==nodeToRepMap.end())
@@ -242,7 +242,7 @@ public:
         else
             return it->second;
     }
-    inline NodeBS& sccSubNodes(NodeID id)
+    virtual inline NodeBS& sccSubNodes(NodeID id)
     {
         nodeToSubsMap[id].set(id);
         return nodeToSubsMap[id];

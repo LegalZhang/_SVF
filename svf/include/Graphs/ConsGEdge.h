@@ -187,6 +187,9 @@ public:
     NodeID getSVFGID() const {
         return svfgid;
     }
+    void setSVFGID(NodeID newid) {
+        svfgid = newid;
+    }
 
 private:
     NodeID svfgid;
@@ -228,6 +231,9 @@ public:
     /// Getter for fsID
     NodeID getSVFGID() const {
         return svfgid;
+    }
+    void setSVFGID(NodeID newid) {
+        svfgid = newid;
     }
 
 private:

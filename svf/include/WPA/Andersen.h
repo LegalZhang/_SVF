@@ -130,7 +130,7 @@ public:
     {
         return consCG->sccRepNode(id);
     }
-    inline NodeBS& sccSubNodes(NodeID repId)
+    virtual inline NodeBS& sccSubNodes(NodeID repId)
     {
         return consCG->sccSubNodes(repId);
     }

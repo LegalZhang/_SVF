@@ -87,7 +87,14 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
                 // pairToidMap[NodePair(dst, svfgID)] = dst;
                 addConstraintNode(new ConstraintNode(dst), dst);
             }
-            addLoadCGEdge(src, dst, svfgID);
+            ConstraintEdge* existingEdge = getEdge(getConstraintNode(src), getConstraintNode(dst), ConstraintEdge::Load);
+            if (existingEdge) {
+                if (LoadCGEdge* loadEdge = SVFUtil::dyn_cast<LoadCGEdge>(existingEdge)) {
+                    loadEdge->setSVFGID(svfgID);
+                }
+            } else {
+                addLoadCGEdge(src, dst, svfgID);
+            }
         }
 
         if (StoreSVFGNode* storeNode = SVFUtil::dyn_cast<StoreSVFGNode>(node))
@@ -109,7 +116,14 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
                 // pairToidMap[NodePair(dst, svfgID)] = dst;
                 addConstraintNode(new ConstraintNode(dst), dst);
             }
-            addStoreCGEdge(src, dst, svfgID);
+            ConstraintEdge* existingEdge = getEdge(getConstraintNode(src), getConstraintNode(dst), ConstraintEdge::Store);
+            if (existingEdge) {
+                if (StoreCGEdge* storeEdge = SVFUtil::dyn_cast<StoreCGEdge>(existingEdge)) {
+                    storeEdge->setSVFGID(svfgID);
+                }
+            } else {
+                addStoreCGEdge(src, dst, svfgID);
+            }
         }
 
         if (GepSVFGNode* gepNode = SVFUtil::dyn_cast<GepSVFGNode>(node))
