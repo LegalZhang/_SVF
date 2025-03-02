@@ -41,11 +41,21 @@ protected:
     bool collapseNodePts(NodeID nodeId);
     void collapseFields() override;
     bool collapseField(NodeID nodeId);
-    // virtual void mergeNodeToRep(NodeID nodeId,NodeID newRepId) override;
-    // virtual bool processCopy(NodeID node, const ConstraintEdge* edge) override;
-    // virtual bool processGep(NodeID node, const GepCGEdge* edge) override;
-    // virtual bool processGepPts(const PointsTo& pts, const GepCGEdge* edge) override;
-    // virtual void handleCopyGep(ConstraintNode* node) override;
+    void mergeNodeToRep(NodeID nodeId,NodeID newRepId) override;
+
+    void handleCopyGep(ConstraintNode* node) override;
+    bool processCopy(NodeID node, const ConstraintEdge* edge) override;
+    bool processGep(NodeID node, const GepCGEdge* edge) override;\
+    bool processGepPts(const PointsTo& pts, const GepCGEdge* edge) override;
+
+    virtual void postProcessNode(NodeID nodeId);
+    virtual bool handleStore(NodeID node, const ConstraintEdge* store);
+    virtual bool processStore(NodeID node, const ConstraintEdge* store) override;
+    virtual bool handleLoad(NodeID node, const ConstraintEdge* load);
+    virtual bool processLoad(NodeID node, const ConstraintEdge* load) override;
+
+    NodeID getAddrDef(NodeID consgid, NodeID svfgid);
+    bool isStrongUpdate(const StoreCGEdge* store, NodeID& singleton);
 
     /// SCC methods
     //@{
@@ -59,14 +69,40 @@ protected:
     }
     //@}
 
-    virtual void postProcessNode(NodeID nodeId);
-    virtual bool handleStore(NodeID node, const ConstraintEdge* store);
-    virtual bool processStore(NodeID node, const ConstraintEdge* store) override;
-    virtual bool handleLoad(NodeID node, const ConstraintEdge* load);
-    virtual bool processLoad(NodeID node, const ConstraintEdge* load) override;
+    /// Handle diff points-to set.
+    virtual inline void computeDiffPts(NodeID id) override
+    {
+        if (Options::DiffPts())
+        {
+            NodeID rep = sccRepNode(id);
+            getDiffPTDataTy()->computeDiffPts(rep, getDiffPTDataTy()->getPts(rep));
+        }
+    }
+    virtual inline const PointsTo& getDiffPts(NodeID id) override
+    {
+        NodeID rep = sccRepNode(id);
+        if (Options::DiffPts())
+            return getDiffPTDataTy()->getDiffPts(rep);
+        else
+            return getPTDataTy()->getPts(rep);
+    }
 
-    NodeID getAddrDef(NodeID consgid, NodeID svfgid);
-    bool isStrongUpdate(const StoreCGEdge* store, NodeID& singleton);
+    /// Operation of points-to set
+    virtual inline const PointsTo& getPts(NodeID id) override
+    {
+        return getPTDataTy()->getPts(sccRepNode(id));
+    }
+    virtual inline bool unionPts(NodeID id, const PointsTo& target) override
+    {
+        id = sccRepNode(id);
+        return getPTDataTy()->unionPts(id, target);
+    }
+    virtual inline bool unionPts(NodeID id, NodeID ptd) override
+    {
+        id = sccRepNode(id);
+        ptd = sccRepNode(ptd);
+        return getPTDataTy()->unionPts(id,ptd);
+    }
 
     /// Add copy edge on constraint graph
     virtual inline bool addCopyEdge(NodeID src, NodeID dst) override

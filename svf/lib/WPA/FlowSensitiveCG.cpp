@@ -232,6 +232,13 @@ bool FlowSensitiveCG::collapseField(NodeID nodeId)
     return changed;
 }
 
+void FlowSensitiveCG::mergeNodeToRep(NodeID nodeId,NodeID newRepId)
+{
+
+    if (mergeSrcToTgt(nodeId,newRepId))
+        fsconsCG->setPWCNode(newRepId);
+}
+
 void FlowSensitiveCG::processNode(NodeID nodeId)
 {
     // This node may be merged during collapseNodePts() which means it is no longer a rep node
@@ -244,6 +251,110 @@ void FlowSensitiveCG::processNode(NodeID nodeId)
     handleCopyGep(node);
     double propEnd = stat->getClk();
     timeOfProcessCopyGep += (propEnd - propStart) / TIMEINTERVAL;
+}
+
+void FlowSensitiveCG::handleCopyGep(ConstraintNode* node)
+{
+    NodeID nodeId = node->getId();
+    computeDiffPts(nodeId);
+
+    if (!getDiffPts(nodeId).empty())
+    {
+        for (ConstraintEdge* edge : node->getCopyOutEdges())
+            // process copy
+            processCopy(nodeId, edge);
+        for (ConstraintEdge* edge : node->getGepOutEdges())
+        {
+            if (GepCGEdge* gepEdge = SVFUtil::dyn_cast<GepCGEdge>(edge))
+                // process gep
+                processGep(nodeId, gepEdge);
+        }
+    }
+}
+
+bool FlowSensitiveCG::processCopy(NodeID node, const ConstraintEdge* edge)
+{
+
+    numOfProcessedCopy++;
+
+    assert((SVFUtil::isa<CopyCGEdge>(edge)) && "not copy/call/ret ??");
+    NodeID dst = edge->getDstID();
+    const PointsTo& srcPts = getDiffPts(node);
+
+    bool changed = unionPts(dst, srcPts);
+    if (changed)
+        pushIntoWorklist(dst);
+    return changed;
+
+}
+
+bool FlowSensitiveCG::processGep(NodeID, const GepCGEdge* edge)
+{
+    const PointsTo& srcPts = getDiffPts(edge->getSrcID());
+    return processGepPts(srcPts, edge);
+}
+
+bool FlowSensitiveCG::processGepPts(const PointsTo& pts, const GepCGEdge* edge)
+{
+    numOfProcessedGep++;
+
+    PointsTo tmpDstPts;
+    if (SVFUtil::isa<VariantGepCGEdge>(edge))
+    {
+        // If a pointer is connected by a variant gep edge,
+        // then set this memory object to be field insensitive,
+        // unless the object is a black hole/constant.
+        for (NodeID o : pts)
+        {
+            NodeID pagId = fsconsCG->getPAGNodeID(o);
+            if (fsconsCG->isBlkObjOrConstantObj(pagId))
+            {
+                tmpDstPts.set(pagId);
+                continue;
+            }
+
+            if (!isFieldInsensitive(pagId))
+            {
+                setObjFieldInsensitive(pagId);
+                fsconsCG->addNodeToBeCollapsed(fsconsCG->getBaseObjVar(pagId));
+            }
+
+            // Add the field-insensitive node into pts.
+            NodeID baseId = fsconsCG->getFIObjVar(pagId);
+            tmpDstPts.set(baseId);
+        }
+    }
+    else if (const NormalGepCGEdge* normalGepEdge = SVFUtil::dyn_cast<NormalGepCGEdge>(edge))
+    {
+        // TODO: after the node is set to field insensitive, handling invariant
+        // gep edge may lose precision because offsets here are ignored, and the
+        // base object is always returned.
+        for (NodeID o : pts)
+        {
+            NodeID pagId = fsconsCG->getPAGNodeID(o);
+            if (fsconsCG->isBlkObjOrConstantObj(pagId) || isFieldInsensitive(pagId))
+            {
+                tmpDstPts.set(pagId);
+                continue;
+            }
+
+            NodeID fieldSrcPtdNode = fsconsCG->getGepObjVar(pagId, normalGepEdge->getAccessPath().getConstantStructFldIdx());
+            tmpDstPts.set(fieldSrcPtdNode);
+        }
+    }
+    else
+    {
+        assert(false && "Andersen::processGepPts: New type GEP edge type?");
+    }
+
+    NodeID dstId = edge->getDstID();
+    if (unionPts(dstId, tmpDstPts))
+    {
+        pushIntoWorklist(dstId);
+        return true;
+    }
+
+    return false;
 }
 
 /*!
@@ -408,214 +519,3 @@ CopyCGEdge* ConstraintGraph::addCopyCGEdge(NodeID src, NodeID dst)
     dstNode->addIncomingCopyEdge(edge);
     return edge;
 }
-
-/*
-
-inline void FlowSensitiveCG::collapsePWCNode(NodeID nodeId)
-{
-    // If a node is a PWC node, collapse all its points-to target.
-    // collapseNodePts() may change the points-to set of the nodes which have been processed
-    // before, in this case, we may need to re-do the analysis.
-    if (fsconsCG->isPWCNode(nodeId) && collapseNodePts(nodeId))
-        reanalyze = true;
-}
-
-bool FlowSensitiveCG::collapseNodePts(NodeID nodeId)
-{
-    bool changed = false;
-    const PointsTo& nodePts = getPts(nodeId);
-    /// Points to set may be changed during collapse, so use a clone instead.
-    PointsTo ptsClone = nodePts;
-    for (PointsTo::iterator ptsIt = ptsClone.begin(), ptsEit = ptsClone.end(); ptsIt != ptsEit; ptsIt++)
-    {
-        if (isFieldInsensitive(*ptsIt))
-            continue;
-
-        auto pagIt = fsconsCG->getPAGNodeID(*ptsIt);
-        if (collapseField(pagIt))
-            changed = true;
-    }
-    return changed;
-}
-
-inline void FlowSensitiveCG::collapseFields()
-{
-    while (fsconsCG->hasNodesToBeCollapsed())
-    {
-        NodeID node = fsconsCG->getNextCollapseNode();
-        // collapseField() may change the points-to set of the nodes which have been processed
-        // before, in this case, we may need to re-do the analysis.
-        if (collapseField(node))
-            reanalyze = true;
-    }
-}
-
-bool FlowSensitiveCG::collapseField(NodeID nodeId)
-{
-    /// Black hole doesn't have structures, no collapse is needed.
-    /// In later versions, instead of using base node to represent the struct,
-    /// we'll create new field-insensitive node. To avoid creating a new "black hole"
-    /// node, do not collapse field for black hole node.
-    auto pagID = fsconsCG->getPAGNodeID(nodeId);
-    if (fsconsCG->isBlkObjOrConstantObj(pagID))
-        return false;
-
-    bool changed = false;
-
-    double start = stat->getClk();
-
-    // set base node field-insensitive.
-    setObjFieldInsensitive(pagID);
-
-    // replace all occurrences of each field with the field-insensitive node
-    NodeID baseId = fsconsCG->getFIObjVar(pagID);
-    NodeID baseRepNodeId = fsconsCG->sccRepNode(baseId);
-    NodeBS & allFields = fsconsCG->getAllFieldsObjVars(pagID);
-    for (NodeBS::iterator fieldIt = allFields.begin(), fieldEit = allFields.end(); fieldIt != fieldEit; fieldIt++)
-    {
-        NodeID fieldId = *fieldIt;
-        if (fieldId != baseId)
-        {
-            // use the reverse pts of this field node to find all pointers point to it
-            const NodeSet revPts = getRevPts(fieldId);
-            for (const NodeID o : revPts)
-            {
-                // change the points-to target from field to base node
-                clearPts(o, fieldId);
-                addPts(o, baseId);
-                pushIntoWorklist(o);
-
-                changed = true;
-            }
-            // merge field node into base node, including edges and pts.
-            NodeID fieldRepNodeId = fsconsCG->sccRepNode(fieldId);
-            mergeNodeToRep(fieldRepNodeId, baseRepNodeId);
-            if (fieldId != baseRepNodeId)
-            {
-                // gep node fieldId becomes redundant if it is merged to its base node who is set as field-insensitive
-                // two node IDs should be different otherwise this field is actually the base and should not be removed.
-                redundantGepNodes.set(fieldId);
-            }
-        }
-    }
-
-    if (fsconsCG->isPWCNode(baseRepNodeId))
-        if (collapseNodePts(baseRepNodeId))
-            changed = true;
-
-    double end = stat->getClk();
-    timeOfCollapse += (end - start) / TIMEINTERVAL;
-
-    return changed;
-}
-
-void FlowSensitiveCG::mergeNodeToRep(NodeID nodeId,NodeID newRepId)
-{
-
-    if (mergeSrcToTgt(nodeId,newRepId))
-        fsconsCG->setPWCNode(newRepId);
-}
-
-void FlowSensitiveCG::handleCopyGep(ConstraintNode* node)
-{
-    NodeID nodeId = node->getId();
-    computeDiffPts(nodeId);
-
-    if (!getDiffPts(nodeId).empty())
-    {
-        for (ConstraintEdge* edge : node->getCopyOutEdges())
-            processCopy(nodeId, edge);
-        // for (ConstraintEdge* edge : node->getGepOutEdges())
-        // {
-        //     if (GepCGEdge* gepEdge = SVFUtil::dyn_cast<GepCGEdge>(edge))
-        //         processGep(nodeId, gepEdge);
-        // }
-    }
-}
-
-bool FlowSensitiveCG::processCopy(NodeID node, const ConstraintEdge* edge)
-{
-
-    numOfProcessedCopy++;
-
-    assert((SVFUtil::isa<CopyCGEdge>(edge)) && "not copy/call/ret ??");
-    NodeID dst = edge->getDstID();
-    const PointsTo& srcPts = getDiffPts(node);
-
-    bool changed = unionPts(dst, srcPts);
-    if (changed)
-        pushIntoWorklist(dst);
-    return changed;
-
-
-}
-
-bool FlowSensitiveCG::processGep(NodeID, const GepCGEdge* edge)
-{
-    const PointsTo& srcPts = getDiffPts(edge->getSrcID());
-    return processGepPts(srcPts, edge);
-}
-
-bool FlowSensitiveCG::processGepPts(const PointsTo& pts, const GepCGEdge* edge)
-{
-    numOfProcessedGep++;
-
-    PointsTo tmpDstPts;
-    if (SVFUtil::isa<VariantGepCGEdge>(edge))
-    {
-        // If a pointer is connected by a variant gep edge,
-        // then set this memory object to be field insensitive,
-        // unless the object is a black hole/constant.
-        for (NodeID o : pts)
-        {
-            auto pago = fsconsCG->getPAGNodeID(o);
-            if (fsconsCG->isBlkObjOrConstantObj(pago))
-            {
-                tmpDstPts.set(pago);
-                continue;
-            }
-
-            if (!isFieldInsensitive(pago))
-            {
-                setObjFieldInsensitive(pago);
-                fsconsCG->addNodeToBeCollapsed(fsconsCG->getBaseObjVar(pago));
-            }
-
-            // Add the field-insensitive node into pts.
-            NodeID baseId = fsconsCG->getFIObjVar(pago);
-            tmpDstPts.set(baseId);
-        }
-    }
-    else if (const NormalGepCGEdge* normalGepEdge = SVFUtil::dyn_cast<NormalGepCGEdge>(edge))
-    {
-        // TODO: after the node is set to field insensitive, handling invariant
-        // gep edge may lose precision because offsets here are ignored, and the
-        // base object is always returned.
-        for (NodeID o : pts)
-        {
-            auto pago = fsconsCG->getPAGNodeID(o);
-            if (fsconsCG->isBlkObjOrConstantObj(pago) || isFieldInsensitive(pago))
-            {
-                tmpDstPts.set(pago);
-                continue;
-            }
-
-            NodeID fieldSrcPtdNode = fsconsCG->getGepObjVar(pago, normalGepEdge->getAccessPath().getConstantStructFldIdx());
-            tmpDstPts.set(fieldSrcPtdNode);
-        }
-    }
-    else
-    {
-        assert(false && "Andersen::processGepPts: New type GEP edge type?");
-    }
-
-    NodeID dstId = edge->getDstID();
-    if (unionPts(dstId, tmpDstPts))
-    {
-        pushIntoWorklist(dstId);
-        return true;
-    }
-
-    return false;
-}
-*/
