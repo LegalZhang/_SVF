@@ -32,11 +32,25 @@ public:
         return fsconsCG;
     }
 
+    // virtual void graphFolding();
+
+    virtual bool isRepNode(NodeID nodeId)
+    {
+        return fsconsCG->nodeToRepMap.find(nodeId) != fsconsCG->nodeToRepMap.end();;
+    }
+
 protected:
     virtual void solveWorklist() override;
     virtual void processNode(NodeID nodeId) override;
     virtual void processAllAddr();
     virtual void processAddr(const AddrCGEdge* addr) override;
+
+    virtual NodeStack& SCCDetect() override;
+    void mergeSccCycle();
+    void mergeSccNodes(NodeID repNodeId, const NodeBS& subNodes);
+    virtual bool mergeSrcToTgt(NodeID srcId,NodeID tgtId) override;
+    void updateNodeRepAndSubs(NodeID nodeId,NodeID newRepId);
+
     virtual void collapsePWCNode(NodeID nodeId) override;
     bool collapseNodePts(NodeID nodeId);
     void collapseFields() override;

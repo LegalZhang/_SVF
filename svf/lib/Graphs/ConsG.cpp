@@ -338,13 +338,15 @@ void ConstraintGraph::reTargetDstOfEdge(ConstraintEdge* edge, ConstraintNode* ne
     NodeID srcId = edge->getSrcID();
     if(LoadCGEdge* load = SVFUtil::dyn_cast<LoadCGEdge>(edge))
     {
+        NodeID svfgid = load->getSVFGID();
         removeLoadEdge(load);
-        addLoadCGEdge(srcId,newDstNodeID,0);
+        addLoadCGEdge(srcId,newDstNodeID,svfgid);
     }
     else if(StoreCGEdge* store = SVFUtil::dyn_cast<StoreCGEdge>(edge))
     {
+        NodeID svfgid = store->getSVFGID();
         removeStoreEdge(store);
-        addStoreCGEdge(srcId,newDstNodeID,0);
+        addStoreCGEdge(srcId,newDstNodeID,svfgid);
     }
     else if(CopyCGEdge* copy = SVFUtil::dyn_cast<CopyCGEdge>(edge))
     {
@@ -382,13 +384,15 @@ void ConstraintGraph::reTargetSrcOfEdge(ConstraintEdge* edge, ConstraintNode* ne
     NodeID dstId = edge->getDstID();
     if(LoadCGEdge* load = SVFUtil::dyn_cast<LoadCGEdge>(edge))
     {
+        NodeID svfgid = load->getSVFGID();
         removeLoadEdge(load);
-        addLoadCGEdge(newSrcNodeID,dstId,0);
+        addLoadCGEdge(newSrcNodeID,dstId,svfgid);
     }
     else if(StoreCGEdge* store = SVFUtil::dyn_cast<StoreCGEdge>(edge))
     {
+        NodeID svfgid = store->getSVFGID();
         removeStoreEdge(store);
-        addStoreCGEdge(newSrcNodeID,dstId,0);
+        addStoreCGEdge(newSrcNodeID,dstId,svfgid);
     }
     else if(CopyCGEdge* copy = SVFUtil::dyn_cast<CopyCGEdge>(edge))
     {

@@ -101,11 +101,27 @@ void FlowSensitiveCG::solveWorklist()
     // Nodes in nodeStack are in topological order by default.
     NodeStack& nodeStack = SCCDetect();
 
+
+    /// TODO insert graph folding
+    /// A Function : 遍历SCCDetect后的图，遍历所有Copy边，取出所有Copy边，判断Copy边的dst能不能被merge到src上面
+    /// 被merge到src的dst不能是address-taken variables（isMemObject）
+    /// top-level的dst：incomingCopyEdge是不是有且只有取出来的Copy边那一条（incomingCopyEdge和incomingGepEdge和incomingLoadEdge和incomingDirectEdge）
+    /// 修改NodeToRepMap
+    /// 先统计起来需要merge的dst node，然后遍历结束后统一修改
+
+    // graphFolding();
+
     // Process nodeStack and put the changed nodes into workList.
     while (!nodeStack.empty())
     {
+
         NodeID nodeId = nodeStack.top();
         nodeStack.pop();
+
+        // If a node is not in NodeToRepMap, skip it.
+        if (!isRepNode(nodeId))
+            continue;
+
         collapsePWCNode(nodeId);
 
         // process nodes in nodeStack
@@ -121,6 +137,132 @@ void FlowSensitiveCG::solveWorklist()
         // process nodes in worklist
         postProcessNode(nodeId);
     }
+}
+
+/*!
+ * SCC detection on constraint graph
+ */
+NodeStack& FlowSensitiveCG::SCCDetect()
+{
+    numOfSCCDetection++;
+
+    double sccStart = stat->getClk();
+    WPAConstraintSolver::SCCDetect();
+    double sccEnd = stat->getClk();
+
+    timeOfSCCDetection +=  (sccEnd - sccStart)/TIMEINTERVAL;
+
+    double mergeStart = stat->getClk();
+
+    mergeSccCycle();
+
+    double mergeEnd = stat->getClk();
+
+    timeOfSCCMerges +=  (mergeEnd - mergeStart)/TIMEINTERVAL;
+
+    return getSCCDetector()->topoNodeStack();
+}
+
+/*
+ * Merge constraint graph nodes based on SCC cycle detected.
+ */
+void FlowSensitiveCG::mergeSccCycle()
+{
+    NodeStack revTopoOrder;
+    NodeStack & topoOrder = getSCCDetector()->topoNodeStack();
+    while (!topoOrder.empty())
+    {
+        NodeID repNodeId = topoOrder.top();
+        topoOrder.pop();
+        revTopoOrder.push(repNodeId);
+        const NodeBS& subNodes = getSCCDetector()->subNodes(repNodeId);
+        // merge sub nodes to rep node
+        mergeSccNodes(repNodeId, subNodes);
+    }
+
+    // restore the topological order for later solving.
+    while (!revTopoOrder.empty())
+    {
+        NodeID nodeId = revTopoOrder.top();
+        revTopoOrder.pop();
+        topoOrder.push(nodeId);
+    }
+}
+
+/**
+ * Union points-to of subscc nodes into its rep nodes
+ * Move incoming/outgoing direct edges of sub node to rep node
+ */
+void FlowSensitiveCG::mergeSccNodes(NodeID repNodeId, const NodeBS& subNodes)
+{
+    for (NodeBS::iterator nodeIt = subNodes.begin(); nodeIt != subNodes.end(); nodeIt++)
+    {
+        NodeID subNodeId = *nodeIt;
+        if (subNodeId != repNodeId)
+        {
+            mergeNodeToRep(subNodeId, repNodeId);
+        }
+    }
+}
+
+void FlowSensitiveCG::mergeNodeToRep(NodeID nodeId,NodeID newRepId)
+{
+
+    if (mergeSrcToTgt(nodeId,newRepId))
+        fsconsCG->setPWCNode(newRepId);
+}
+
+/*!
+ * merge nodeId to newRepId. Return true if the newRepId is a PWC node
+ */
+bool FlowSensitiveCG::mergeSrcToTgt(NodeID nodeId, NodeID newRepId)
+{
+
+    if(nodeId==newRepId)
+        return false;
+
+    /// union pts of node to rep
+    updatePropaPts(newRepId, nodeId);
+    unionPts(newRepId,nodeId);
+
+    /// move the edges from node to rep, and remove the node
+    ConstraintNode* node = fsconsCG->getConstraintNode(nodeId);
+    bool pwc = fsconsCG->moveEdgesToRepNode(node, fsconsCG->getConstraintNode(newRepId));
+
+    /// 1. if find gep edges inside SCC cycle, the rep node will become a PWC node and
+    /// its pts should be collapsed later.
+    /// 2. if the node to be merged is already a PWC node, the rep node will also become
+    /// a PWC node as it will have a self-cycle gep edge.
+    if(node->isPWCNode())
+        pwc = true;
+
+    /// set rep and sub relations
+    updateNodeRepAndSubs(node->getId(),newRepId);
+
+    fsconsCG->removeConstraintNode(node);
+
+    return pwc;
+}
+
+/*
+ * Updates subnodes of its rep, and rep node of its subs
+ */
+void FlowSensitiveCG::updateNodeRepAndSubs(NodeID nodeId, NodeID newRepId)
+{
+    fsconsCG->setRep(nodeId,newRepId);
+    NodeBS repSubs;
+    repSubs.set(nodeId);
+    /// update nodeToRepMap, for each subs of current node updates its rep to newRepId
+    //  update nodeToSubsMap, union its subs with its rep Subs
+    NodeBS& nodeSubs = fsconsCG->sccSubNodes(nodeId);
+    for(NodeBS::iterator sit = nodeSubs.begin(), esit = nodeSubs.end(); sit!=esit; ++sit)
+    {
+        NodeID subId = *sit;
+        fsconsCG->setRep(subId,newRepId);
+    }
+    repSubs |= nodeSubs;
+    fsconsCG->setSubs(newRepId,repSubs);
+    fsconsCG->resetSubs(nodeId);
 }
 
 /**
@@ -230,13 +372,6 @@ bool FlowSensitiveCG::collapseField(NodeID nodeId)
     timeOfCollapse += (end - start) / TIMEINTERVAL;
 
     return changed;
-}
-
-void FlowSensitiveCG::mergeNodeToRep(NodeID nodeId,NodeID newRepId)
-{
-
-    if (mergeSrcToTgt(nodeId,newRepId))
-        fsconsCG->setPWCNode(newRepId);
 }
 
 void FlowSensitiveCG::processNode(NodeID nodeId)
