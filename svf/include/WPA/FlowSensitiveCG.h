@@ -32,7 +32,8 @@ public:
         return fsconsCG;
     }
 
-    // virtual void graphFolding();
+    virtual void graphFolding();
+    virtual bool hasOnlyOneIncomingCopyEdge(NodeID nodeId);
 
     virtual bool isRepNode(NodeID nodeId)
     {

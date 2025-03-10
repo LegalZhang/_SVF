@@ -2,8 +2,6 @@
 add_library(SvfCore
         lib/WPA/AndersenLCD.cpp
         include/WPA/AndersenLCD.h
-        ../Test-Suite/aliascheck.h
-        ../Test-Suite/bug.cpp
         lib/Graphs/FSConsG.cpp
         include/Graphs/FSConsG.h)
 

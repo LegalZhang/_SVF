@@ -119,8 +119,8 @@ void FlowSensitiveCG::solveWorklist()
         nodeStack.pop();
 
         // If a node is not in NodeToRepMap, skip it.
-        if (!isRepNode(nodeId))
-            continue;
+        // if (!isRepNode(nodeId))
+        //     continue;
 
         collapsePWCNode(nodeId);
 
@@ -137,6 +137,50 @@ void FlowSensitiveCG::solveWorklist()
         // process nodes in worklist
         postProcessNode(nodeId);
     }
+}
+
+void FlowSensitiveCG::graphFolding()
+{
+    for (ConstraintGraph::const_iterator nodeIt = fsconsCG->begin(), nodeEit = fsconsCG->end(); nodeIt != nodeEit; nodeIt++)
+    {
+        NodeID node = nodeIt->first;
+        ConstraintNode* dstNode = nodeIt->second;
+        // node is not an address-taken variable and only has one incoming copy edge
+        if (!SVFUtil::isa<ObjVar>(nodeIt->second) &&
+            hasOnlyOneIncomingCopyEdge(node))
+        {
+            ConstraintEdge* singleEdge = *dstNode->getCopyInEdges().begin();
+
+            NodeID srcID = singleEdge->getSrcID();
+            ConstraintNode* srcNode = fsconsCG->getConstraintNode(srcID);
+
+            for (auto &entry : fsconsCG->nodeToRepMap) {
+                if (entry.second == node) {
+                    entry.second = srcID;
+                }
+            }
+
+            for (ConstraintEdge* outEdge : dstNode->getOutEdges()) {
+                fsconsCG->reTargetSrcOfEdge(outEdge, srcNode);
+            }
+
+            // fsconsCG->removeConstraintNode(dstNode);
+        }
+    }
+}
+
+// 遍历所有Copy边，检查target
+// 所有Copy边的dst能不能被merge到src上面
+// 如果dst符合186行，那么就可以merge到src上面
+bool FlowSensitiveCG::hasOnlyOneIncomingCopyEdge(NodeID nodeId)
+{
+    // Check if the node has only one incoming direct edge
+    ConstraintNode *consGNode = fsconsCG->getConstraintNode(nodeId);
+    if (consGNode->getCopyInEdges().size() == 1 && consGNode->getInEdges().size() == 1)
+    {
+        return true;
+    }
+    return false;
 }
 
 /*!
