@@ -206,6 +206,7 @@ public:
 
     // Andersen.cpp
     static const Option<bool> ConsCGDotGraph;
+    static const Option<bool> SVFG2CG;
     static const Option<bool> BriefConsCGDotGraph;
     static const Option<bool> PrintCGGraph;
     // static const Option<string> WriteAnder;

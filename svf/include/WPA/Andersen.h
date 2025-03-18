@@ -129,7 +129,7 @@ public:
     {
         return consCG->sccRepNode(id);
     }
-    inline NodeBS& sccSubNodes(NodeID repId)
+    virtual inline NodeBS& sccSubNodes(NodeID repId)
     {
         return consCG->sccSubNodes(repId);
     }
@@ -229,6 +229,7 @@ public:
     {
         return (pta->getAnalysisTy() == Andersen_WPA
                 || pta->getAnalysisTy() == AndersenWaveDiff_WPA
+                || pta->getAnalysisTy() == AndersenFS_WPA
                 || pta->getAnalysisTy() == AndersenSCD_WPA
                 || pta->getAnalysisTy() == AndersenSFR_WPA);
     }

@@ -73,6 +73,7 @@ public:
     virtual void performStat();
 
     void collectCycleInfo(ConstraintGraph* consCG);
+    void collectCycleInfoFS(FSConsG* fsconsCG);
 
     void statNullPtr();
 

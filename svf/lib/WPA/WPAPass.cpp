@@ -32,16 +32,19 @@
  *
  */
 
-
-#include "Util/Options.h"
-#include "MemoryModel/PointerAnalysisImpl.h"
 #include "WPA/WPAPass.h"
+#include "MemoryModel/PointerAnalysisImpl.h"
+#include "SVFIR/SVFModule.h"
+#include "Util/Options.h"
 #include "WPA/Andersen.h"
+#include "WPA/AndersenLCD.h"
 #include "WPA/AndersenPWC.h"
 #include "WPA/FlowSensitive.h"
-#include "WPA/VersionedFlowSensitive.h"
-#include "WPA/TypeAnalysis.h"
+#include "WPA/FlowSensitiveCG.h"
+#include "WPA/FlowSensitiveFS.h"
 #include "WPA/Steensgaard.h"
+#include "WPA/TypeAnalysis.h"
+#include "WPA/VersionedFlowSensitive.h"
 
 using namespace SVF;
 
@@ -87,6 +90,9 @@ void WPAPass::runPointerAnalysis(SVFIR* pag, u32_t kind)
     case PointerAnalysis::Andersen_WPA:
         _pta = new Andersen(pag);
         break;
+    case PointerAnalysis::AndersenLCD_WPA:
+        _pta = new AndersenLCD(pag);
+        break;
     case PointerAnalysis::AndersenSCD_WPA:
         _pta = new AndersenSCD(pag);
         break;
@@ -95,6 +101,12 @@ void WPAPass::runPointerAnalysis(SVFIR* pag, u32_t kind)
         break;
     case PointerAnalysis::AndersenWaveDiff_WPA:
         _pta = new AndersenWaveDiff(pag);
+        break;
+    case PointerAnalysis::AndersenFS_WPA:
+        _pta = new FlowSensitiveCG(pag);
+        break;
+    case PointerAnalysis::AndersenFSCG_WPA:
+        _pta = new FlowSensitiveFS(pag);
         break;
     case PointerAnalysis::Steensgaard_WPA:
         _pta = new Steensgaard(pag);
@@ -141,23 +153,77 @@ void WPAPass::PrintAliasPairs(PointerAnalysis* pta)
             node2 = rit->second;
             if(node1==node2)
                 continue;
-            const FunObjVar* fun1 = node1->getFunction();
-            const FunObjVar* fun2 = node2->getFunction();
+            const SVFFunction* fun1 = node1->getFunction();
+            const SVFFunction* fun2 = node2->getFunction();
             AliasResult result = pta->alias(node1->getId(), node2->getId());
             SVFUtil::outs()	<< (result == AliasResult::NoAlias ? "NoAlias" : "MayAlias")
-                            << " var" << node1->getId() << "[" << node1->getName()
+                            << " var" << node1->getId() << "[" << node1->getValueName()
                             << "@" << (fun1==nullptr?"":fun1->getName()) << "] --"
-                            << " var" << node2->getId() << "[" << node2->getName()
+                            << " var" << node2->getId() << "[" << node2->getValueName()
                             << "@" << (fun2==nullptr?"":fun2->getName()) << "]\n";
         }
     }
 }
 
+const PointsTo& WPAPass::getPts(const SVFValue* value)
+{
+    assert(_pta && "initialize a pointer analysis first");
+    SVFIR* pag = _pta->getPAG();
+    return getPts(pag->getValueNode(value));
+}
 
 const PointsTo& WPAPass::getPts(NodeID var)
 {
     assert(_pta && "initialize a pointer analysis first");
     return _pta->getPts(var);
+}
+
+/*!
+ * Return alias results based on our points-to/alias analysis
+ * TODO: Need to handle PartialAlias and MustAlias here.
+ */
+AliasResult WPAPass::alias(const SVFValue* V1, const SVFValue* V2)
+{
+
+    AliasResult result = AliasResult::MayAlias;
+
+    SVFIR* pag = _pta->getPAG();
+
+    /// TODO: When this method is invoked during compiler optimizations, the IR
+    ///       used for pointer analysis may been changed, so some Values may not
+    ///       find corresponding SVFIR node. In this case, we only check alias
+    ///       between two Values if they both have SVFIR nodes. Otherwise, MayAlias
+    ///       will be returned.
+    if (pag->hasValueNode(V1) && pag->hasValueNode(V2))
+    {
+        /// Veto is used by default
+        if (Options::AliasRule.nothingSet() || Options::AliasRule(Veto))
+        {
+            /// Return NoAlias if any PTA gives NoAlias result
+            result = AliasResult::MayAlias;
+
+            for (PTAVector::const_iterator it = ptaVector.begin(), eit = ptaVector.end();
+                    it != eit; ++it)
+            {
+                if ((*it)->alias(V1, V2) == AliasResult::NoAlias)
+                    result = AliasResult::NoAlias;
+            }
+        }
+        else if (Options::AliasRule(Conservative))
+        {
+            /// Return MayAlias if any PTA gives MayAlias result
+            result = AliasResult::NoAlias;
+
+            for (PTAVector::const_iterator it = ptaVector.begin(), eit = ptaVector.end();
+                    it != eit; ++it)
+            {
+                if ((*it)->alias(V1, V2) == AliasResult::MayAlias)
+                    result = AliasResult::MayAlias;
+            }
+        }
+    }
+
+    return result;
 }
 
 /*!
@@ -169,6 +235,14 @@ ModRefInfo WPAPass::getModRefInfo(const CallICFGNode* callInst)
     return _svfg->getMSSA()->getMRGenerator()->getModRefInfo(callInst);
 }
 
+/*!
+ * Return mod-ref results of a Callsite to a specific memory location
+ */
+ModRefInfo WPAPass::getModRefInfo(const CallICFGNode* callInst, const SVFValue* V)
+{
+    assert(Options::PASelected(PointerAnalysis::AndersenWaveDiff_WPA) && Options::AnderSVFG() && "mod-ref query is only support with -ander and -svfg turned on");
+    return _svfg->getMSSA()->getMRGenerator()->getModRefInfo(callInst, V);
+}
 
 /*!
  * Return mod-ref result between two CallInsts

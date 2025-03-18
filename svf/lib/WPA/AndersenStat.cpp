@@ -30,6 +30,7 @@
 #include "MemoryModel/PointerAnalysis.h"
 #include "WPA/WPAStat.h"
 #include "WPA/Andersen.h"
+#include "WPA/FlowSensitiveCG.h"
 
 using namespace SVF;
 using namespace SVFUtil;
@@ -97,11 +98,62 @@ void AndersenStat::collectCycleInfo(ConstraintGraph* consCG)
     _NumOfCycles += repNodes.size();
 }
 
+/*!
+ * Collect cycle information for FS
+ */
+void AndersenStat::collectCycleInfoFS(FSConsG* consCG)
+{
+    _NumOfCycles = 0;
+    _NumOfPWCCycles = 0;
+    _NumOfNodesInCycles = 0;
+    NodeSet repNodes;
+    repNodes.clear();
+    for(ConstraintGraph::iterator it = consCG->begin(), eit = consCG->end(); it!=eit; ++it)
+    {
+        // sub nodes have been removed from the constraint graph, only rep nodes are left.
+        NodeID repNode = consCG->sccRepNode(it->first);
+        NodeBS& subNodes = consCG->sccSubNodes(repNode);
+        NodeBS clone = subNodes;
+        for (NodeBS::iterator it = subNodes.begin(), eit = subNodes.end(); it != eit; ++it)
+        {
+            NodeID nodeId = *it;
+            NodeID pagID = consCG->getPAGNodeID(nodeId);
+            PAGNode* pagNode = pta->getPAG()->getGNode(pagID);
+            if (SVFUtil::isa<ObjVar>(pagNode) && pta->isFieldInsensitive(pagID))
+            {
+                NodeID baseId = consCG->getBaseObjVar(pagID);
+                clone.reset(pagID);
+                clone.set(baseId);
+            }
+        }
+        u32_t num = clone.count();
+        if (num > 1)
+        {
+            if(repNodes.insert(repNode).second)
+            {
+                _NumOfNodesInCycles += num;
+                if(consCG->isPWCNode(repNode))
+                    _NumOfPWCCycles ++;
+            }
+            if( num > _MaxNumOfNodesInSCC)
+                _MaxNumOfNodesInSCC = num;
+        }
+    }
+    _NumOfCycles += repNodes.size();
+}
+
 void AndersenStat::constraintGraphStat()
 {
 
 
     ConstraintGraph* consCG = pta->getConstraintGraph();
+    if (consCG == nullptr) {
+        FlowSensitiveCG* fspta = dynamic_cast<FlowSensitiveCG*>(pta);
+        if (fspta != nullptr && fspta->getFSConsG() != nullptr) {
+            consCG = fspta->getFSConsG();
+            // FSConsG* fsconsg = dynamic_cast<FSConsG*>(consCG);
+        }
+    }
 
     u32_t numOfCopys = 0;
     u32_t numOfGeps = 0;
@@ -141,8 +193,13 @@ void AndersenStat::constraintGraphStat()
         if(nodeIt->second->getInEdges().empty() && nodeIt->second->getOutEdges().empty())
             continue;
         cgNodeNumber++;
-        if(SVFUtil::isa<ObjVar>(pta->getPAG()->getGNode(nodeIt->first)))
-            objNodeNumber++;
+        if(pta->getConstraintGraph() == nullptr)
+        {
+            FSConsG* fsconsg = dynamic_cast<FSConsG*>(consCG);
+            NodeID pagID = fsconsg->getPAGNodeID(nodeIt->first);
+            if(SVFUtil::isa<ObjVar>(pta->getPAG()->getGNode(pagID)))
+                objNodeNumber++;
+        }
 
         u32_t nCopyIn = nodeIt->second->getDirectInEdges().size();
         if(nCopyIn > copymaxIn)
@@ -270,8 +327,19 @@ void AndersenStat::performStat()
     SVFIR* pag = pta->getPAG();
     ConstraintGraph* consCG = pta->getConstraintGraph();
 
-    // collect constraint graph cycles
-    collectCycleInfo(consCG);
+    if (consCG == nullptr) {
+        FlowSensitiveCG* fspta = dynamic_cast<FlowSensitiveCG*>(pta);
+        if (fspta != nullptr && fspta->getFSConsG() != nullptr) {
+            consCG = fspta->getFSConsG();
+            FSConsG* fsconsg = dynamic_cast<FSConsG*>(consCG);
+            collectCycleInfoFS(fsconsg);
+        }
+    } else {
+        // collect constraint graph cycles
+        collectCycleInfo(consCG);
+    }
+
+
 
     // stat null ptr number
     statNullPtr();

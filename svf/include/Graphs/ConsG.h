@@ -32,6 +32,7 @@
 
 #include "Graphs/ConsGEdge.h"
 #include "Graphs/ConsGNode.h"
+#include "MSSA/SVFGBuilder.h"
 
 namespace SVF
 {
@@ -93,6 +94,7 @@ public:
     {
         buildCG();
     }
+
     /// Destructor
     virtual ~ConstraintGraph()
     {
@@ -180,9 +182,9 @@ public:
     NormalGepCGEdge* addNormalGepCGEdge(NodeID src, NodeID dst, const AccessPath& ap);
     VariantGepCGEdge* addVariantGepCGEdge(NodeID src, NodeID dst);
     /// Add Load edge
-    LoadCGEdge* addLoadCGEdge(NodeID src, NodeID dst);
+    LoadCGEdge* addLoadCGEdge(NodeID src, NodeID dst, NodeID fsID);
     /// Add Store edge
-    StoreCGEdge* addStoreCGEdge(NodeID src, NodeID dst);
+    StoreCGEdge* addStoreCGEdge(NodeID src, NodeID dst, NodeID fsID);
     //@}
 
     ///Get SVFIR edge
@@ -227,7 +229,7 @@ public:
 
     /// SCC rep/sub nodes methods
     //@{
-    inline NodeID sccRepNode(NodeID id) const
+    virtual inline NodeID sccRepNode(NodeID id) const
     {
         NodeToRepMap::const_iterator it = nodeToRepMap.find(id);
         if(it==nodeToRepMap.end())
@@ -235,7 +237,7 @@ public:
         else
             return it->second;
     }
-    inline NodeBS& sccSubNodes(NodeID id)
+    virtual inline NodeBS& sccSubNodes(NodeID id)
     {
         nodeToSubsMap[id].set(id);
         return nodeToSubsMap[id];

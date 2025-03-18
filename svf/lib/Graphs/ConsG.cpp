@@ -130,7 +130,7 @@ void ConstraintGraph::buildCG()
                 loads.end(); iter != eiter; ++iter)
     {
         LoadStmt* edge = SVFUtil::cast<LoadStmt>(*iter);
-        addLoadCGEdge(edge->getRHSVarID(),edge->getLHSVarID());
+        addLoadCGEdge(edge->getRHSVarID(),edge->getLHSVarID(),0);
     }
 
     SVFStmt::SVFStmtSetTy& stores = getPAGEdgeSet(SVFStmt::Store);
@@ -138,7 +138,7 @@ void ConstraintGraph::buildCG()
                 stores.end(); iter != eiter; ++iter)
     {
         StoreStmt* edge = SVFUtil::cast<StoreStmt>(*iter);
-        addStoreCGEdge(edge->getRHSVarID(),edge->getLHSVarID());
+        addStoreCGEdge(edge->getRHSVarID(),edge->getLHSVarID(),0);
     }
 
     clearSolitaries();
@@ -285,14 +285,14 @@ VariantGepCGEdge* ConstraintGraph::addVariantGepCGEdge(NodeID src, NodeID dst)
 /*!
  * Add Load edge
  */
-LoadCGEdge* ConstraintGraph::addLoadCGEdge(NodeID src, NodeID dst)
+LoadCGEdge* ConstraintGraph::addLoadCGEdge(NodeID src, NodeID dst, NodeID fsID)
 {
     ConstraintNode* srcNode = getConstraintNode(src);
     ConstraintNode* dstNode = getConstraintNode(dst);
     if (hasEdge(srcNode, dstNode, ConstraintEdge::Load))
         return nullptr;
 
-    LoadCGEdge* edge = new LoadCGEdge(srcNode, dstNode, edgeIndex++);
+    LoadCGEdge* edge = new LoadCGEdge(srcNode, dstNode, edgeIndex++, fsID);
 
     bool inserted = LoadCGEdgeSet.insert(edge).second;
     (void)inserted; // Suppress warning of unused variable under release build
@@ -306,14 +306,14 @@ LoadCGEdge* ConstraintGraph::addLoadCGEdge(NodeID src, NodeID dst)
 /*!
  * Add Store edge
  */
-StoreCGEdge* ConstraintGraph::addStoreCGEdge(NodeID src, NodeID dst)
+StoreCGEdge* ConstraintGraph::addStoreCGEdge(NodeID src, NodeID dst, NodeID fsID)
 {
     ConstraintNode* srcNode = getConstraintNode(src);
     ConstraintNode* dstNode = getConstraintNode(dst);
     if (hasEdge(srcNode, dstNode, ConstraintEdge::Store))
         return nullptr;
 
-    StoreCGEdge* edge = new StoreCGEdge(srcNode, dstNode, edgeIndex++);
+    StoreCGEdge* edge = new StoreCGEdge(srcNode, dstNode, edgeIndex++, fsID);
 
     bool inserted = StoreCGEdgeSet.insert(edge).second;
     (void)inserted; // Suppress warning of unused variable under release build
@@ -338,13 +338,15 @@ void ConstraintGraph::reTargetDstOfEdge(ConstraintEdge* edge, ConstraintNode* ne
     NodeID srcId = edge->getSrcID();
     if(LoadCGEdge* load = SVFUtil::dyn_cast<LoadCGEdge>(edge))
     {
+        NodeID svfgid = load->getSVFGID();
         removeLoadEdge(load);
-        addLoadCGEdge(srcId,newDstNodeID);
+        addLoadCGEdge(srcId,newDstNodeID,svfgid);
     }
     else if(StoreCGEdge* store = SVFUtil::dyn_cast<StoreCGEdge>(edge))
     {
+        NodeID svfgid = store->getSVFGID();
         removeStoreEdge(store);
-        addStoreCGEdge(srcId,newDstNodeID);
+        addStoreCGEdge(srcId,newDstNodeID,svfgid);
     }
     else if(CopyCGEdge* copy = SVFUtil::dyn_cast<CopyCGEdge>(edge))
     {
@@ -382,13 +384,15 @@ void ConstraintGraph::reTargetSrcOfEdge(ConstraintEdge* edge, ConstraintNode* ne
     NodeID dstId = edge->getDstID();
     if(LoadCGEdge* load = SVFUtil::dyn_cast<LoadCGEdge>(edge))
     {
+        NodeID svfgid = load->getSVFGID();
         removeLoadEdge(load);
-        addLoadCGEdge(newSrcNodeID,dstId);
+        addLoadCGEdge(newSrcNodeID,dstId,svfgid);
     }
     else if(StoreCGEdge* store = SVFUtil::dyn_cast<StoreCGEdge>(edge))
     {
+        NodeID svfgid = store->getSVFGID();
         removeStoreEdge(store);
-        addStoreCGEdge(newSrcNodeID,dstId);
+        addStoreCGEdge(newSrcNodeID,dstId,svfgid);
     }
     else if(CopyCGEdge* copy = SVFUtil::dyn_cast<CopyCGEdge>(edge))
     {
