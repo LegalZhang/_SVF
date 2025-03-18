@@ -14,6 +14,7 @@ using namespace SVF;
  */
 void FlowSensitiveCG::initialize()
 {
+    std::cout << "啦啦啦啦啦啦FS--ANDER啦啦啦啦啦啦" << std::endl;
     resetData();
     /// Build SVFIR
     PointerAnalysis::initialize();
@@ -30,6 +31,7 @@ void FlowSensitiveCG::initialize()
     if (Options::SVFG2CG())
         fsconsCG->dump("fsconsg_initial");
 
+    std::cout << "啦啦啦啦啦啦END--FS--ANDER啦啦啦啦啦啦" << std::endl;
     /// Initialize worklist
     processAllAddr();
 
@@ -649,6 +651,7 @@ NodeID FlowSensitiveCG::getAddrDef(NodeID consgid, NodeID svfgid)
     auto it = fsconsCG->pairToidMap.find(NodePair(consgid, svfgid));
     if (it == fsconsCG->pairToidMap.end())
     {
+        return consgid;
         // debug
         std::cout<<"[FlowSensitiveCG::getAddrDef] NodePair not found: ("<<consgid<<", "<<svfgid<<")"<<std::endl;
     }

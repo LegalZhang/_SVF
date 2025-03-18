@@ -200,30 +200,30 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
             }
         }
 
-        if (FormalParmSVFGNode* fparm =
-                SVFUtil::dyn_cast<FormalParmSVFGNode>(node))
-        {
-            auto svfgID = fparm->getId();
-            auto fpnode = fparm->getParam()->getId();
-            if (!hasConstraintNode(fpnode))
-            {
-                insertConstraintMapping(fpnode, svfgID, fpnode);
-                // idTopairMap[fpnode] = NodePair(fpnode, svfgID);
-                // pairToidMap[NodePair(fpnode, svfgID)] = fpnode;
-                addConstraintNode(new ConstraintNode(fpnode), fpnode);
-            }
-            auto i = 0;
-            for (auto iter = fparm->callPEBegin(), eiter = fparm->callPEEnd();
-                 iter != eiter; ++iter, i++)
-            {
-                auto* callPE = *iter;
-                auto callICFGNode = callPE->getCallSite();
-                // auto funEntryICFGNode = callPE->getFunEntryICFGNode();
-                auto src = callICFGNode->getActualParms();
-                auto id = src[i]->getId();
-                addCopyCGEdge(id, fpnode);
-            }
-        }
+        // if (FormalParmSVFGNode* fparm =
+        //         SVFUtil::dyn_cast<FormalParmSVFGNode>(node))
+        // {
+        //     auto svfgID = fparm->getId();
+        //     auto fpnode = fparm->getParam()->getId();
+        //     if (!hasConstraintNode(fpnode))
+        //     {
+        //         insertConstraintMapping(fpnode, svfgID, fpnode);
+        //         // idTopairMap[fpnode] = NodePair(fpnode, svfgID);
+        //         // pairToidMap[NodePair(fpnode, svfgID)] = fpnode;
+        //         addConstraintNode(new ConstraintNode(fpnode), fpnode);
+        //     }
+        //     auto i = 0;
+        //     for (auto iter = fparm->callPEBegin(), eiter = fparm->callPEEnd();
+        //          iter != eiter; ++iter, i++)
+        //     {
+        //         auto* callPE = *iter;
+        //         auto callICFGNode = callPE->getCallSite();
+        //         // auto funEntryICFGNode = callPE->getFunEntryICFGNode();
+        //         auto src = callICFGNode->getActualParms();
+        //         auto id = src[i]->getId();
+        //         addCopyCGEdge(id, fpnode);
+        //     }
+        // }
 
         if (ActualRetVFGNode* aret = SVFUtil::dyn_cast<ActualRetVFGNode>(node))
         {
