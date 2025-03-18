@@ -669,11 +669,14 @@ bool FlowSensitiveCG::isStrongUpdate(const StoreCGEdge* node, NodeID& singleton)
             singleton = *it;
 
             // Strong update can be made if this points-to target is not heap, array or field-insensitive.
-            if (!isHeapMemObj(singleton) && !isArrayMemObj(singleton)
-                    && pag->getBaseObj(singleton)->isFieldInsensitive() == false
-                    && !isLocalVarInRecursiveFun(singleton))
+            if (!isHeapMemObj(singleton) && !isArrayMemObj(singleton))
             {
-                isSU = true;
+                assert(pag->getBaseObject(singleton)->isFieldInsensitive() == pag->getBaseObject(singleton)->isFieldInsensitive());
+                if (pag->getBaseObject(singleton)->isFieldInsensitive() == false
+                        && !isLocalVarInRecursiveFun(singleton))
+                {
+                    isSU = true;
+                }
             }
         }
     }

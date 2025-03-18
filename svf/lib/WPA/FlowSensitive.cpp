@@ -27,13 +27,12 @@
  *      Author: Yulei Sui
  */
 
-#include "WPA/FlowSensitive.h"
-#include "Graphs/FSConsG.h"
-#include "MemoryModel/PointsTo.h"
-#include "SVFIR/SVFModule.h"
 #include "Util/Options.h"
-#include "WPA/Andersen.h"
 #include "WPA/WPAStat.h"
+#include "WPA/FlowSensitive.h"
+#include "WPA/Andersen.h"
+#include "MemoryModel/PointsTo.h"
+#include "Graphs/FSConsG.h"
 
 using namespace SVF;
 using namespace SVFUtil;
@@ -675,11 +674,14 @@ bool FlowSensitive::isStrongUpdate(const SVFGNode* node, NodeID& singleton)
             singleton = *it;
 
             // Strong update can be made if this points-to target is not heap, array or field-insensitive.
-            if (!isHeapMemObj(singleton) && !isArrayMemObj(singleton)
-                    && pag->getBaseObj(singleton)->isFieldInsensitive() == false
-                    && !isLocalVarInRecursiveFun(singleton))
+            if (!isHeapMemObj(singleton) && !isArrayMemObj(singleton))
             {
-                isSU = true;
+                assert(pag->getBaseObject(singleton)->isFieldInsensitive() == pag->getBaseObject(singleton)->isFieldInsensitive());
+                if (pag->getBaseObject(singleton)->isFieldInsensitive() == false
+                        && !isLocalVarInRecursiveFun(singleton))
+                {
+                    isSU = true;
+                }
             }
         }
     }
@@ -715,7 +717,7 @@ bool FlowSensitive::updateCallGraph(const CallSiteToFunPtrMap& callsites)
         for (FunctionSet::iterator potentialFunctionIt = potentialFunctionSet.begin();
                 potentialFunctionIt != potentialFunctionSet.end(); )
         {
-            const SVFFunction *potentialFunction = *potentialFunctionIt;
+            const FunObjVar *potentialFunction = *potentialFunctionIt;
             if (andersFunctionSet.find(potentialFunction) == andersFunctionSet.end())
             {
                 // potentialFunction is not in the Andersen's call graph -- remove it.
@@ -752,7 +754,7 @@ void FlowSensitive::connectCallerAndCallee(const CallEdgeMap& newEdges, SVFGEdge
         const FunctionSet & functions = iter->second;
         for (FunctionSet::const_iterator func_iter = functions.begin(); func_iter != functions.end(); func_iter++)
         {
-            const SVFFunction*  func = *func_iter;
+            const FunObjVar*  func = *func_iter;
             svfg->connectCallerAndCallee(cs, func, edges);
         }
     }
