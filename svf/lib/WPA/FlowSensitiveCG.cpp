@@ -627,7 +627,7 @@ bool FlowSensitiveCG::processStore(NodeID node, const ConstraintEdge* store)
     auto src = fsStoreEdge->getSrcID();
     auto svfgid = fsStoreEdge->getSVFGID();
 
-    NodeID dst = getAddrDef(node, svfgid);
+    NodeID dst = getAddrDef(pagId, svfgid);
     // add ConstraintNode
     // addConstraintNode(new ConstraintNode(dst), dst);
 
