@@ -35,6 +35,7 @@
 #include <sstream>
 
 #include "Graphs/CallGraph.h"
+#include "WPA/FlowSensitiveSCD.h"
 
 using namespace SVF;
 using namespace SVFUtil;
@@ -47,7 +48,7 @@ BVDataPTAImpl::BVDataPTAImpl(SVFIR* p, PointerAnalysis::PTATY type, bool alias_c
     PointerAnalysis(p, type, alias_check), ptCache()
 {
     if (type == Andersen_BASE || type == Andersen_WPA || type == AndersenLCD_WPA || type == AndersenWaveDiff_WPA || type == AndersenFS_WPA || type == AndersenFSCG_WPA
-            || type == TypeCPP_WPA || type == FlowS_DDA
+            || type == FlowSensitiveSCD_WPA || type == TypeCPP_WPA || type == FlowS_DDA
             || type == AndersenSCD_WPA || type == AndersenSFR_WPA || type == CFLFICI_WPA || type == CFLFSCS_WPA)
     {
         // Only maintain reverse points-to when the analysis is field-sensitive, as objects turning
@@ -106,6 +107,8 @@ void BVDataPTAImpl::finalize()
 
         if(ptaTy >= Andersen_BASE && ptaTy <= Steensgaard_WPA)
             subtitle = "Andersen's analysis bitvector";
+        else if (ptaTy >= FlowSensitiveSCD_WPA)
+            subtitle = "FlowSensitiveSCD analysis bitvector";
         else if(ptaTy >=FSDATAFLOW_WPA && ptaTy <=FSCS_WPA)
             subtitle = "flow-sensitive analysis bitvector";
         else if(ptaTy >=CFLFICI_WPA && ptaTy <=CFLFSCS_WPA)

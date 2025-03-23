@@ -31,6 +31,7 @@
 #include "WPA/WPAStat.h"
 #include "WPA/Andersen.h"
 #include "WPA/FlowSensitiveCG.h"
+#include "WPA/FlowSensitiveSCD.h"
 
 using namespace SVF;
 using namespace SVFUtil;
@@ -148,7 +149,8 @@ void AndersenStat::constraintGraphStat()
 
     ConstraintGraph* consCG = pta->getConstraintGraph();
     if (consCG == nullptr) {
-        FlowSensitiveCG* fspta = dynamic_cast<FlowSensitiveCG*>(pta);
+        /// Jiahao: Must switch to CG or SCD when executing the corresponding command
+        FlowSensitiveSCD* fspta = dynamic_cast<FlowSensitiveSCD*>(pta);
         if (fspta != nullptr && fspta->getFSConsG() != nullptr) {
             consCG = fspta->getFSConsG();
             // FSConsG* fsconsg = dynamic_cast<FSConsG*>(consCG);
@@ -328,7 +330,8 @@ void AndersenStat::performStat()
     ConstraintGraph* consCG = pta->getConstraintGraph();
 
     if (consCG == nullptr) {
-        FlowSensitiveCG* fspta = dynamic_cast<FlowSensitiveCG*>(pta);
+        /// Jiahao: Must switch to CG or SCD when executing the corresponding command
+        FlowSensitiveSCD* fspta = dynamic_cast<FlowSensitiveSCD*>(pta);
         if (fspta != nullptr && fspta->getFSConsG() != nullptr) {
             consCG = fspta->getFSConsG();
             FSConsG* fsconsg = dynamic_cast<FSConsG*>(consCG);

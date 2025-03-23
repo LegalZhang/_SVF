@@ -59,8 +59,6 @@ void FlowSensitiveFS::initialize()
 }
 
 /*!
- * solve worklist
- */
 void AndersenWaveDiff::solveWorklist()
 {
     // Initialize the nodeStack via a whole SCC detection
@@ -87,9 +85,6 @@ void AndersenWaveDiff::solveWorklist()
     }
 }
 
-/*!
- * Process edge PAGNode
- */
 void AndersenWaveDiff::processNode(NodeID nodeId)
 {
     // This node may be merged during collapseNodePts() which means it is no longer a rep node
@@ -104,9 +99,6 @@ void AndersenWaveDiff::processNode(NodeID nodeId)
     timeOfProcessCopyGep += (propEnd - propStart) / TIMEINTERVAL;
 }
 
-/*!
- * Post process node
- */
 void AndersenWaveDiff::postProcessNode(NodeID nodeId)
 {
     double insertStart = stat->getClk();
@@ -132,9 +124,6 @@ void AndersenWaveDiff::postProcessNode(NodeID nodeId)
     timeOfProcessLoadStore += (insertEnd - insertStart) / TIMEINTERVAL;
 }
 
-/*!
- * Handle load
- */
 bool AndersenWaveDiff::handleLoad(NodeID nodeId, const ConstraintEdge* edge)
 {
     bool changed = false;
@@ -149,9 +138,6 @@ bool AndersenWaveDiff::handleLoad(NodeID nodeId, const ConstraintEdge* edge)
     return changed;
 }
 
-/*!
- * Handle store
- */
 bool AndersenWaveDiff::handleStore(NodeID nodeId, const ConstraintEdge* edge)
 {
     bool changed = false;
@@ -165,3 +151,5 @@ bool AndersenWaveDiff::handleStore(NodeID nodeId, const ConstraintEdge* edge)
     }
     return changed;
 }
+
+*/

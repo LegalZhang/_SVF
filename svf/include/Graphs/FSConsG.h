@@ -18,6 +18,7 @@ namespace SVF
 class  FSConsG : public ConstraintGraph
 {
     friend class FlowSensitiveCG;
+    friend class FlowSensitiveSCD;
 
 public:
     /// Constructor

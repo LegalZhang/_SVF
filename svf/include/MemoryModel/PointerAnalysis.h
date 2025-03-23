@@ -69,6 +69,7 @@ public:
         AndersenWaveDiff_WPA,	///< Diff wave propagation andersen-style WPA
         AndersenFS_WPA,    ///< Flow-sensitive Andersen WPA
         AndersenFSCG_WPA,	///< Flow-sensitive Andersen WPA with constraint graph
+        FlowSensitiveSCD_WPA,    ///< Flow-sensitive SCD
         Steensgaard_WPA,      ///< Steensgaard PTA
         CSCallString_WPA,	///< Call string based context sensitive WPA
         CSSummary_WPA,		///< Summary based context sensitive WPA
