@@ -689,22 +689,3 @@ bool FlowSensitiveCG::isStrongUpdate(const StoreCGEdge* node, NodeID& singleton)
     }
     return isSU;
 }
-
-CopyCGEdge* ConstraintGraph::addCopyCGEdge(NodeID src, NodeID dst)
-{
-
-    ConstraintNode* srcNode = getConstraintNode(src);
-    ConstraintNode* dstNode = getConstraintNode(dst);
-    if (hasEdge(srcNode, dstNode, ConstraintEdge::Copy) || srcNode == dstNode)
-        return nullptr;
-
-    CopyCGEdge* edge = new CopyCGEdge(srcNode, dstNode, edgeIndex++);
-
-    bool inserted = directEdgeSet.insert(edge).second;
-    (void)inserted; // Suppress warning of unused variable under release build
-    assert(inserted && "new CopyCGEdge not added??");
-
-    srcNode->addOutgoingCopyEdge(edge);
-    dstNode->addIncomingCopyEdge(edge);
-    return edge;
-}

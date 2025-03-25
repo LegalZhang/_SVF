@@ -65,7 +65,10 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
                 // pairToidMap[NodePair(dst, svfgID)] = dst;
                 addConstraintNode(new ConstraintNode(dst), dst);
             }
-            addCopyCGEdge(src, dst);
+            if (addCopyCGEdge(src, dst))
+            {
+                NumberOfInitialCopy++;
+            }
         }
 
         if (LoadSVFGNode* loadNode = SVFUtil::dyn_cast<LoadSVFGNode>(node))
@@ -181,7 +184,10 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
                     // pairToidMap[NodePair(src, svfgID)] = src;
                     addConstraintNode(new ConstraintNode(src), src);
                 }
-                addCopyCGEdge(src, dst);
+                if (addCopyCGEdge(src, dst))
+                {
+                    NumberOfInitialCopy++;
+                }
             }
         }
 
@@ -258,7 +264,10 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
                 // auto funEntryICFGNode = RetPE->getFunExitICFGNode();
                 auto src = callICFGNode->getRetICFGNode()->getActualRet();
                 auto id = src->getId();
-                addCopyCGEdge(id, frnode);
+                if (addCopyCGEdge(id, frnode))
+                {
+                    NumberOfInitialCopy++;
+                }
             }
         }
 
@@ -304,7 +313,10 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
                     // pairToidMap[NodePair(fsrc, svfgID)] = src;
                     addConstraintNode(new ConstraintNode(src), src);
                 }
-                addCopyCGEdge(src, dst);
+                if (addCopyCGEdge(src, dst))
+                {
+                    NumberOfInitialCopy++;
+                }
             }
         }
 
@@ -328,6 +340,16 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
                 // SVFGNode* srcNodeType = svfg->getSVFGNode(srcsvfgID);
                 // initialPts(src);
                 addConstraintNode(new ConstraintNode(src), src);
+                //if it is a load node
+                if (SVFUtil::isa<LoadSVFGNode>(svfg->getSVFGNode(srcsvfgID)))
+                {
+                    NumberOfLoad++;
+                }
+                //if it is a store node
+                if (SVFUtil::isa<StoreSVFGNode>(svfg->getSVFGNode(srcsvfgID)))
+                {
+                    NumberOfStore++;
+                }
             }
 
             if (!hasConstraintNodePair(i, dstIndirect))
@@ -341,11 +363,25 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
                 // SVFGNode* dstNodeType = svfg->getSVFGNode(dstsvfgID);
                 // initialPts(dst);
                 addConstraintNode(new ConstraintNode(dst), dst);
+                //if it is a load node
+                if (SVFUtil::isa<LoadSVFGNode>(svfg->getSVFGNode(dstsvfgID)))
+                {
+                    NumberOfLoad++;
+                }
+                //if it is a store node
+                if (SVFUtil::isa<StoreSVFGNode>(svfg->getSVFGNode(dstsvfgID)))
+                {
+                    NumberOfStore++;
+                }
             }
 
             NodeID srcNode = pairToidMap[NodePair(i, srcIndirect)];
             NodeID dstNode = pairToidMap[NodePair(i, dstIndirect)];
-            addCopyCGEdge(srcNode, dstNode);
+            // number of initial copy
+            if (addCopyCGEdge(srcNode, dstNode))
+            {
+                NumberOfInitialCopy++;
+            }
         }
     }
 

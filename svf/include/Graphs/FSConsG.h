@@ -78,6 +78,13 @@ protected:
 
     void buildSVFG2CG(SVFG* svfg);
 
+    // number of load
+    u32_t NumberOfLoad;
+    // number of store
+    u32_t NumberOfStore;
+    // number of initial copy
+    u32_t NumberOfInitialCopy;
+
 public:
     /// Dump graph into dot file
     void dump(std::string name);

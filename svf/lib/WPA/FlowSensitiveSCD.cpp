@@ -33,6 +33,10 @@ void FlowSensitiveSCD::initialize()
 
     std::cout << "啦啦啦啦啦啦END--FS--ANDER啦啦啦啦啦啦" << std::endl;
 
+    std::cout << "Number of Load = " << fsconsCG->NumberOfLoad << std::endl;
+    std::cout << "Number of Store = " << fsconsCG->NumberOfStore << std::endl;
+    std::cout << "Number of Initial Copy = " << fsconsCG->NumberOfInitialCopy << std::endl;
+    exit(0);
     /// Create Andersen statistic class
     stat = new AndersenStat(this);
 
@@ -813,23 +817,4 @@ bool FlowSensitiveSCD::isStrongUpdate(const StoreCGEdge* node, NodeID& singleton
         }
     }
     return isSU;
-}
-
-CopyCGEdge* ConstraintGraph::addCopyCGEdge(NodeID src, NodeID dst)
-{
-
-    ConstraintNode* srcNode = getConstraintNode(src);
-    ConstraintNode* dstNode = getConstraintNode(dst);
-    if (hasEdge(srcNode, dstNode, ConstraintEdge::Copy) || srcNode == dstNode)
-        return nullptr;
-
-    CopyCGEdge* edge = new CopyCGEdge(srcNode, dstNode, edgeIndex++);
-
-    bool inserted = directEdgeSet.insert(edge).second;
-    (void)inserted; // Suppress warning of unused variable under release build
-    assert(inserted && "new CopyCGEdge not added??");
-
-    srcNode->addOutgoingCopyEdge(edge);
-    dstNode->addIncomingCopyEdge(edge);
-    return edge;
 }
