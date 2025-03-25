@@ -353,7 +353,7 @@ void FSConsG::buildSVFG2CG(SVFG* svfg)
 
 /*!
  * Add Load edge
- */
+
 LoadCGEdge* ConstraintGraph::addLoadCGEdge(NodeID src, NodeID dst, NodeID fsID)
 {
     ConstraintNode* srcNode = getConstraintNode(src);
@@ -371,10 +371,11 @@ LoadCGEdge* ConstraintGraph::addLoadCGEdge(NodeID src, NodeID dst, NodeID fsID)
     dstNode->addIncomingLoadEdge(edge);
     return edge;
 }
+*/
 
 /*!
  * Add Store edge
- */
+
 StoreCGEdge* ConstraintGraph::addStoreCGEdge(NodeID src, NodeID dst, NodeID fsID)
 {
     ConstraintNode* srcNode = getConstraintNode(src);
@@ -392,6 +393,7 @@ StoreCGEdge* ConstraintGraph::addStoreCGEdge(NodeID src, NodeID dst, NodeID fsID
     dstNode->addIncomingStoreEdge(edge);
     return edge;
 }
+*/
 
 /*!
  * Dump flow-sensitive constraint graph

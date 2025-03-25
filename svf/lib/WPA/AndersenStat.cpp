@@ -151,6 +151,7 @@ void AndersenStat::constraintGraphStat()
     if (consCG == nullptr) {
         /// Jiahao: Must switch to CG or SCD when executing the corresponding command
         FlowSensitiveSCD* fspta = dynamic_cast<FlowSensitiveSCD*>(pta);
+        // FlowSensitiveCG* fspta = dynamic_cast<FlowSensitiveCG*>(pta);
         if (fspta != nullptr && fspta->getFSConsG() != nullptr) {
             consCG = fspta->getFSConsG();
             // FSConsG* fsconsg = dynamic_cast<FSConsG*>(consCG);
@@ -332,6 +333,7 @@ void AndersenStat::performStat()
     if (consCG == nullptr) {
         /// Jiahao: Must switch to CG or SCD when executing the corresponding command
         FlowSensitiveSCD* fspta = dynamic_cast<FlowSensitiveSCD*>(pta);
+        // FlowSensitiveCG* fspta = dynamic_cast<FlowSensitiveCG*>(pta);
         if (fspta != nullptr && fspta->getFSConsG() != nullptr) {
             consCG = fspta->getFSConsG();
             FSConsG* fsconsg = dynamic_cast<FSConsG*>(consCG);

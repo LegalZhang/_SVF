@@ -19,8 +19,8 @@ void FlowSensitiveCG::initialize()
     /// Build SVFIR
     PointerAnalysis::initialize();
 
-    /// Create Andersen statistic class
-    stat = new AndersenStat(this);
+    // /// Create Andersen statistic class
+    // stat = new AndersenStat(this);
 
     ander = AndersenWaveDiff::createAndersenWaveDiff(getPAG());
     svfg = memSSA.buildPTROnlySVFG(ander);
@@ -32,6 +32,10 @@ void FlowSensitiveCG::initialize()
         fsconsCG->dump("fsconsg_initial");
 
     std::cout << "啦啦啦啦啦啦END--FS--ANDER啦啦啦啦啦啦" << std::endl;
+
+    /// Create Andersen statistic class
+    stat = new AndersenStat(this);
+
     /// Initialize worklist
     processAllAddr();
 

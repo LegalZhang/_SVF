@@ -22,8 +22,8 @@ void FlowSensitiveSCD::initialize()
     ander = AndersenWaveDiff::createAndersenWaveDiff(getPAG());
     svfg = memSSA.buildPTROnlySVFG(ander);
 
-    /// Create Andersen statistic class
-    stat = new AndersenStat(this);
+    // /// Create Andersen statistic class
+    // stat = new AndersenStat(this);
 
     /// Build Flow-Sensitive Constraint Graph
     fsconsCG = new FSConsG(svfg);
@@ -32,6 +32,10 @@ void FlowSensitiveSCD::initialize()
         fsconsCG->dump("fsconsg_initial");
 
     std::cout << "啦啦啦啦啦啦END--FS--ANDER啦啦啦啦啦啦" << std::endl;
+
+    /// Create Andersen statistic class
+    stat = new AndersenStat(this);
+
     /// Initialize worklist
     processAllAddr();
 
