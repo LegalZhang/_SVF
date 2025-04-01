@@ -12,10 +12,10 @@ source setup.sh
 
 Dump FSConsG
 
-wpa -fsander -dump-fsconsg example.ll
+wpa -fsander -dump-fsconsg fs-example.ll
 
 
 
 Run CG-FSPTA
 
-wpa -fsander example.ll
+wpa -fsander fs-example.ll
