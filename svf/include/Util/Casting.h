@@ -1,9 +1,4 @@
-/*
- * Casting.h
- *
- *  Created on: 19Sep.,2018
- *      Author: yulei
- */
+
 
 #ifndef INCLUDE_UTIL_CASTING_H_
 #define INCLUDE_UTIL_CASTING_H_

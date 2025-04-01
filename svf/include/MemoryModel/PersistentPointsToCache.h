@@ -1,15 +1,3 @@
-//===- PersistentPointsToCache.h -- Persistent points-to sets ----------------//
-
-/*
- * PersistentPointsToCache.h
- *
- * The implementation is based on
- * Mohamad Barbar and Yulei Sui. Hash Consed Points-To Sets.
- * 28th Static Analysis Symposium (SAS'21)
- *
- *  Created on: Sep 28, 2020
- *      Author: Mohamad Barbar
- */
 
 #ifndef PERSISTENT_POINTS_TO_H_
 #define PERSISTENT_POINTS_TO_H_

@@ -1,16 +1,3 @@
-//===- BreakConstantGEPs.h - Change constant GEPs into GEP instructions --- --//
-//
-//                          The SAFECode Compiler
-//
-// This file was developed by the LLVM research group and is distributed under
-// the University of Illinois Open Source License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// This pass changes all GEP constant expressions into GEP instructions.  This
-// permits the rest of SAFECode to put run-time checks on them if necessary.
-//
-//===----------------------------------------------------------------------===//
 
 #ifndef BREAKCONSTANTGEPS_H
 #define BREAKCONSTANTGEPS_H

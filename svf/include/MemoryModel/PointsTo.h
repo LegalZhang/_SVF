@@ -1,13 +1,3 @@
-//===- PointsTo.h -- Wrapper of set-like data structures  ------------//
-
-/*
- * PointsTo.h
- *
- * Abstracts away data structures to be used as points-to sets.
- *
- *  Created on: Feb 01, 2021
- *      Author: Mohamad Barbar
- */
 
 #ifndef POINTSTO_H_
 #define POINTSTO_H_

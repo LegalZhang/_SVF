@@ -1,38 +1,3 @@
-//===- ProgSlice.h -- Program slicing based on SVF----------------------------//
-//
-//                     SVF: Static Value-Flow Analysis
-//
-// Copyright (C) <2013->  <Yulei Sui>
-//
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Affero General Public License for more details.
-
-// You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-//
-//===----------------------------------------------------------------------===//
-
-/*
- * ProgSlice.h
- *
- *  Created on: Apr 1, 2014
- *      Author: Yulei Sui
- *
- *  The implementation is based on
- * (1) Yulei Sui, Ding Ye, and Jingling Xue. "Static Memory Leak Detection Using Full-Sparse Value-Flow Analysis".
- * 2012 International Symposium on Software Testing and Analysis (ISSTA'12)
- *
- * (2) Yulei Sui, Ding Ye, and Jingling Xue. "Detecting Memory Leaks Statically with Full-Sparse Value-Flow Analysis".
- * IEEE Transactions on Software Engineering (TSE'14)
- */
 
 #ifndef PROGSLICE_H_
 #define PROGSLICE_H_

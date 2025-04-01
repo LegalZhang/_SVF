@@ -1,8 +1,4 @@
-//
-// Excerpt from fastcluster_R.cpp
-//
-// Copyright: Daniel Müllner, 2011 <http://danifold.net>
-//
+
 
 struct pos_node {
   t_index pos;

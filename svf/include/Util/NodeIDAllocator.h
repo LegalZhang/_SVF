@@ -1,4 +1,3 @@
-//===- NodeIDAllocator.h -- Allocates node IDs on request ------------------------//
 
 #ifndef NODEIDALLOCATOR_H_
 #define NODEIDALLOCATOR_H_

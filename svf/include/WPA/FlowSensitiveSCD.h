@@ -1,6 +1,4 @@
-//
-// Created by Jiahao Zhang on 23/3/2025.
-//
+
 
 #ifndef FLOWSENSITIVEFSCG_H
 #define FLOWSENSITIVEFSCG_H

@@ -1,4 +1,3 @@
-//===- NodeIDAllocator.cpp -- Allocates node IDs on request ------------------------//
 
 #include <iomanip>
 #include <iostream>

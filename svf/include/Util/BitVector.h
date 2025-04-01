@@ -1,13 +1,3 @@
-//===- BitVector.h -- variably sized bit vector data structure ------------//
-
-/*
- * BitVector.h
- *
- * Contiguous bit vector with trailing 0s stripped.
- *
- *  Created on: Jul 4, 2021
- *      Author: Mohamad Barbar
- */
 
 #ifndef BITVECTOR_H_
 #define BITVECTOR_H_

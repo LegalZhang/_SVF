@@ -1,4 +1,3 @@
-//===- Options.h -- Command line options ------------------------//
 
 #ifndef OPTIONS_H_
 #define OPTIONS_H_

@@ -102,13 +102,6 @@ void FlowSensitiveCG::solveWorklist()
     NodeStack& nodeStack = SCCDetect();
 
 
-    /// TODO insert graph folding
-    /// A Function : 遍历SCCDetect后的图，遍历所有Copy边，取出所有Copy边，判断Copy边的dst能不能被merge到src上面
-    /// 被merge到src的dst不能是address-taken variables（isMemObject）
-    /// top-level的dst：incomingCopyEdge是不是有且只有取出来的Copy边那一条（incomingCopyEdge和incomingGepEdge和incomingLoadEdge和incomingDirectEdge）
-    /// 修改NodeToRepMap
-    /// 先统计起来需要merge的dst node，然后遍历结束后统一修改
-
     // graphFolding();
 
     // Process nodeStack and put the changed nodes into workList.
@@ -169,9 +162,6 @@ void FlowSensitiveCG::graphFolding()
     }
 }
 
-// 遍历所有Copy边，检查target
-// 所有Copy边的dst能不能被merge到src上面
-// 如果dst符合186行，那么就可以merge到src上面
 bool FlowSensitiveCG::hasOnlyOneIncomingCopyEdge(NodeID nodeId)
 {
     // Check if the node has only one incoming direct edge

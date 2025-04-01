@@ -1,31 +1,3 @@
-//===----- CFLSolver.h -- Context-free language reachability solver--------------//
-//
-//                     SVF: Static Value-Flow Analysis
-//
-// Copyright (C) <2013->  <Yulei Sui>
-//
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Affero General Public License for more details.
-
-// You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-//
-//===----------------------------------------------------------------------===//
-
-/*
- * CFLSolver.h
- *
- *  Created on: March 5, 2022
- *      Author: Yulei Sui， Yuxiang Lei
- */
 
 #ifndef INCLUDE_CFL_CFLSolver_H_
 #define INCLUDE_CFL_CFLSolver_H_
@@ -286,7 +258,7 @@ public:
 /*!
  * Hybrid graph representation for transitive relations
  * The implementation is based on
- * Yuxiang Lei, Yulei Sui, Shuo Ding, and Qirun Zhang.
+ * , , Shuo Ding, and Qirun .
  * Taming Transitive Redundancy for Context-Free Language Reachability.
  * ACM SIGPLAN Conference on Object-Oriented Programming, Systems, Languages, and Applications
  */

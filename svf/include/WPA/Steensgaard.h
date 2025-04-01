@@ -1,9 +1,4 @@
-/*
- * Steensgaard.h
- *
- *  Created on: 2 Feb. 2021
- *      Author: Yulei Sui
- */
+
 
 #ifndef INCLUDE_WPA_STEENSGAARD_H_
 #define INCLUDE_WPA_STEENSGAARD_H_

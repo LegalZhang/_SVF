@@ -1,13 +1,3 @@
-//===- PointsTo.cpp -- Wrapper of set-like data structures  ------------//
-
-/*
- * PointsTo.cpp
- *
- * Abstracts away data structures to be used as points-to sets (implementation).
- *
- *  Created on: Feb 01, 2021
- *      Author: Mohamad Barbar
- */
 
 #include <new>
 #include <utility>

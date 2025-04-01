@@ -30,7 +30,7 @@ wpa -fspta -dump-vfg fs-example.ll
 
 The SVFG could be shown like below.
 
-![svfg_final](./cg-fspta/svfg_final.png)
+![svfg](./cg-fspta/svfg.png)
 
 
 
@@ -40,7 +40,7 @@ wpa -fsscd -dump-fs-consg fs-example.ll
 
 The FSConsG could be shown like below.
 
-![fsconsg_initial](./cg-fspta/fsconsg_initial.png)
+![fsconsg](./cg-fspta/fsconsg.png)
 
 
 

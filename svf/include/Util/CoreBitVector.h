@@ -1,13 +1,3 @@
-//===- CoreBitVector.h -- Dynamically sized bit vector data structure ------------//
-
-/*
- * CoreBitVector.h
- *
- * Contiguous bit vector which resizes as required by common operations.
- *
- *  Created on: Jan 31, 2021
- *      Author: Mohamad Barbar
- */
 
 #ifndef COREBITVECTOR_H_
 #define COREBITVECTOR_H_

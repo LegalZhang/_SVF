@@ -1,23 +1,3 @@
-//===- Graphs/GraphWriter.h - Write graph to a .dot file --*- C++ -*-===//
-//
-// From the LLVM Project with some modifications, under the Apache License v2.0
-// with LLVM Exceptions. See https://llvm.org/LICENSE.txt for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-//
-//===----------------------------------------------------------------------===//
-//
-// This file defines a simple interface that can be used to print out generic
-// LLVM graphs to ".dot" files.  "dot" is a tool that is part of the AT&T
-// graphviz package (http://www.research.att.com/sw/tools/graphviz/) which can
-// be used to turn the files output by this interface into a variety of
-// different graphics formats.
-//
-// Graphs do not need to implement any interface past what is already required
-// by the GraphTraits template, but they can choose to implement specializations
-// of the DOTGraphTraits template if they want to customize the graphs output in
-// any way.
-//
-//===----------------------------------------------------------------------===//
 
 #ifndef GRAPHS_GRAPHWRITER_H
 #define GRAPHS_GRAPHWRITER_H

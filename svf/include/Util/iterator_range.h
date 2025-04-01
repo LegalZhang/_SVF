@@ -1,19 +1,3 @@
-//===- iter_range.h - A range adaptor for iterators ---------*- C++ -*-===//
-//
-// From the LLVM Project with some modifications, under the Apache License v2.0
-// with LLVM Exceptions. See https://llvm.org/LICENSE.txt for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-//
-//===----------------------------------------------------------------------===//
-/// \file
-/// This provides a very simple, boring adaptor for a begin and end iterator
-/// into a range type. This should be used to build range views that work well
-/// with range based for loops and range based constructors.
-///
-/// Note that code here follows more standards-based coding conventions as it
-/// is mirroring proposed interfaces for standardization.
-///
-//===----------------------------------------------------------------------===//
 
 #ifndef UTIL_ITERATOR_RANGE_H
 #define UTIL_ITERATOR_RANGE_H

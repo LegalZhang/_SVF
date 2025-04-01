@@ -1,6 +1,3 @@
-//
-// Created by Jiahao Zhang on 19/8/2024.
-//
 
 #ifndef FSCONSG_H
 #define FSCONSG_H

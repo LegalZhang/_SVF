@@ -1,15 +1,3 @@
-//===----- DCHG.h -- CHG using DWARF debug info ---------------------------//
-// This is based upon the original CHA.h (now CHG.h).
-
-/*
- * DCHG.h
- *
- *  Created on: Aug 23, 2019
- *      Author: Mohamad Barbar
- */
-
-// TODO: add a flag such that getCanonicalType returns its arg so
-//       that the impl. does not "node collapsing" based on teq.
 
 #ifndef DCHG_H_
 #define DCHG_H_

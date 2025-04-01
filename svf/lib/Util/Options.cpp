@@ -1,4 +1,3 @@
-//===- Options.cpp -- Command line options ------------------------//
 
 #include "Util/Options.h"
 #include "Util/CommandLine.h"

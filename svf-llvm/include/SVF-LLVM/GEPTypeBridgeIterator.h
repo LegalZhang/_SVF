@@ -1,6 +1,4 @@
-// GEPTypeBridgeIterator
-//
-//
+
 #ifndef SVF_GEPTYPEBRIDGEITERATOR_H
 #define SVF_GEPTYPEBRIDGEITERATOR_H
 

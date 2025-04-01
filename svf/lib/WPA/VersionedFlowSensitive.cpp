@@ -1,5 +1,3 @@
-//===- VersionedFlowSensitive.cpp -- Versioned flow-sensitive pointer analysis------------//
-
 
 
 #include "WPA/Andersen.h"

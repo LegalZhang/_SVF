@@ -1,4 +1,3 @@
-//===- VersionedFlowSensitiveStat.cpp -- Statistics for VFSPTA -//
 
 
 #include "Util/SVFUtil.h"

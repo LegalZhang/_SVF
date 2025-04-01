@@ -1,6 +1,4 @@
-//
-// Created by Jiahao Zhang on 19/6/2024.
-//
+
 
 #ifndef ANDERSENLCD_H
 #define ANDERSENLCD_H

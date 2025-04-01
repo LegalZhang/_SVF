@@ -1,13 +1,3 @@
-//===- BitVector.cpp -- bit vector data structure implementation ------------//
-
-/*
- * BitVector.cpp
- *
- * Contiguous bit vector with trailing 0s stripped (implementation).
- *
- *  Created on: Jul 4, 2021
- *      Author: Mohamad Barbar
- */
 
 #include <Util/BitVector.h>
 

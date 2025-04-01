@@ -1,18 +1,3 @@
-//===- llvm/ADT/GenericGraphTraits.h - Graph traits template -----------*- C++ -*-===//
-//
-// From the LLVM Project with some modifications, under the Apache License v2.0
-// with LLVM Exceptions. See https://llvm.org/LICENSE.txt for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-//
-//===----------------------------------------------------------------------===//
-//
-// This file defines the little GenericGraphTraits<X> template class that should be
-// specialized by classes that want to be iterable by generic graph iterators.
-//
-// This file also defines the marker class Inverse that is used to iterate over
-// graphs in a graph defined, inverse ordering...
-//
-//===----------------------------------------------------------------------===//
 
 #ifndef GRAPHS_GRAPHTRAITS_H
 #define GRAPHS_GRAPHTRAITS_H

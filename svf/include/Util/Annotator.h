@@ -1,9 +1,4 @@
-/*
- * Annotator.h
- *
- *  Created on: May 4, 2014
- *      Author: Yulei Sui
- */
+
 
 #ifndef ANNOTATOR_H_
 #define ANNOTATOR_H_
