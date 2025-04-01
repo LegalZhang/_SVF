@@ -9,7 +9,7 @@ using namespace SVF;
 using namespace SVFUtil;
 using namespace std;
 
-AndersenWaveDiff* AndersenWaveDiff::diffWave = nullptr;
+// AndersenWaveDiff* AndersenWaveDiff::diffWave = nullptr;
 
 /*!
  * Initialize
