@@ -2,7 +2,7 @@
 //
 //                     SVF: Static Value-Flow Analysis
 //
-// Copyright (C) <2013-2017>  <Yulei Sui>
+// Copyright (C) <2013-2017>  <>
 //
 
 // This program is free software: you can redistribute it and/or modify
@@ -20,12 +20,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-/*
- * CDG.cpp
- *
- *  Created on: Sep 27, 2023
- *      Author: Xiao Cheng
- */
+
 #include "Graphs/CDG.h"
 
 using namespace SVF;

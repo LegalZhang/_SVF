@@ -2,7 +2,7 @@
 //
 //                     SVF: Static Value-Flow Analysis
 //
-// Copyright (C) <2013->  <Yulei Sui>
+// Copyright (C) <2013->  <>
 //
 
 // This program is free software: you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  * FlowDDA.cpp
  *
  *  Created on: Jun 30, 2014
- *      Author: Yulei Sui, Sen Ye
+ *      Author: , Sen Ye
  */
 
 #include "Util/Options.h"

@@ -2,7 +2,7 @@
 //
 //                     SVF: Static Value-Flow Analysis
 //
-// Copyright (C) <2013-2022>  <Yulei Sui>
+// Copyright (C) <2013-2022>  <>
 //
 
 // This program is free software: you can redistribute it and/or modify
@@ -25,7 +25,7 @@
  * LLVMLoopAnalysis.cpp
  *
  *  Created on: 14, 06, 2022
- *      Author: Jiawei Wang, Xiao Cheng
+ *      Author: Jiawei Wang,
  */
 
 #include "SVF-LLVM/LLVMLoopAnalysis.h"

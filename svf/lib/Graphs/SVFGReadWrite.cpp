@@ -2,7 +2,7 @@
 //
 //                     SVF: Static Value-Flow Analysis
 //
-// Copyright (C) <2013-2017>  <Yulei Sui>
+// Copyright (C) <2013-2017>  <>
 //
 
 // This program is free software: you can redistribute it and/or modify
@@ -20,12 +20,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-/*
- * SVFGReadWrite.cpp
- *
- *  Created on: May 21, 2022
- *      Author: Jeffrey Ma
- */
 
 #include "Util/SVFUtil.h"
 #include "Graphs/SVFG.h"

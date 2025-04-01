@@ -2,7 +2,7 @@
 //
 //                     SVF: Static Value-Flow Analysis
 //
-// Copyright (C) <2013-2017>  <Yulei Sui>
+// Copyright (C) <2013-2017>  <>
 //
 
 // This program is free software: you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  * MemRegion.cpp
  *
  *  Created on: Dec 14, 2013
- *      Author: Yulei Sui
+ *      Author:
  */
 
 #include "Util/Options.h"

@@ -2,7 +2,7 @@
 //
 //                     SVF: Static Value-Flow Analysis
 //
-// Copyright (C) <2013-2018>  <Yulei Sui>
+// Copyright (C) <2013-2018>  <>
 //
 
 // This program is free software: you can redistribute it and/or modify
@@ -20,12 +20,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-/*
- * ICFG.cpp
- *
- *  Created on: Sep 11, 2018
- *      Author: Yulei Sui
- */
 
 #include "Graphs/ICFG.h"
 #include "Graphs/CallGraph.h"

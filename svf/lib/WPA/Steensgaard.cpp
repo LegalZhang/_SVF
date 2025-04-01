@@ -3,7 +3,7 @@
 //
 //                     SVF: Static Value-Flow Analysis
 //
-// Copyright (C) <2013-2017>  <Yulei Sui>
+// Copyright (C) <2013-2017>  <>
 //
 
 // This program is free software: you can redistribute it and/or modify
@@ -21,12 +21,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-/*
- * Steensgaard.cpp
- *
- *  Created on: 2 Feb. 2021
- *      Author: Yulei Sui
- */
 
 #include "WPA/Steensgaard.h"
 

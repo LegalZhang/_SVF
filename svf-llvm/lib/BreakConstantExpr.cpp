@@ -1,5 +1,5 @@
 /* SVF - Static Value-Flow Analysis Framework
-Copyright (C) 2015 Yulei Sui
+Copyright (C) 2015
 Copyright (C) 2015 Jingling Xue
 
 This library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * BreakConstantExpr.cpp
  *
  *  Created on: Oct 8, 2013
- *      Author: Yulei Sui
+ *      Author:
  */
 
 

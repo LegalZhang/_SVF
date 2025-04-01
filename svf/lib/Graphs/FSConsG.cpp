@@ -1,6 +1,3 @@
-//
-// Created by Jiahao Zhang on 19/8/2024.
-//
 
 #include "Graphs/FSConsG.h"
 

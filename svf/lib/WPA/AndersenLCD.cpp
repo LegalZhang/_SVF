@@ -1,6 +1,3 @@
-//
-// Created by Jiahao Zhang on 18/6/2024.
-//
 
 #include "WPA/AndersenLCD.h"
 

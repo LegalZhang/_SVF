@@ -1,6 +1,4 @@
-//
-// Created by Jiahao Zhang on 23/3/2025.
-//
+
 
 #include "WPA/AndersenPWC.h"
 #include "MemoryModel/PointsTo.h"
@@ -14,7 +12,6 @@ using namespace std;
 
 void FlowSensitiveSCD::initialize()
 {
-    std::cout << "啦啦啦啦啦啦FS--ANDER啦啦啦啦啦啦" << std::endl;
     resetData();
     /// Build SVFIR
     PointerAnalysis::initialize();
@@ -31,12 +28,6 @@ void FlowSensitiveSCD::initialize()
     if (Options::SVFG2CG())
         fsconsCG->dump("fsconsg_initial");
 
-    std::cout << "啦啦啦啦啦啦END--FS--ANDER啦啦啦啦啦啦" << std::endl;
-
-    std::cout << "Number of Load = " << fsconsCG->NumberOfLoad << std::endl;
-    std::cout << "Number of Store = " << fsconsCG->NumberOfStore << std::endl;
-    std::cout << "Number of Initial Copy = " << fsconsCG->NumberOfInitialCopy << std::endl;
-    exit(0);
     /// Create Andersen statistic class
     stat = new AndersenStat(this);
 
@@ -61,8 +52,6 @@ void FlowSensitiveSCD::finalize()
 {
     if (Options::SVFG2CG())
         fsconsCG->dump("fsconsg_final");
-
-    std::cout << "哈哈哈哈哈哈END--FS--ANDER哈哈哈哈哈哈" << std::endl;
 
     BVDataPTAImpl::finalize();
 }

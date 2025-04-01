@@ -2,7 +2,7 @@
 //
 //                     SVF: Static Value-Flow Analysis
 //
-// Copyright (C) <2013->  <Yulei Sui>
+// Copyright (C) <2013->  <>
 //
 
 // This program is free software: you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  * CDGBuilder.cpp
  *
  *  Created on: Sep 27, 2023
- *      Author: Xiao Cheng
+ *      Author:
  */
 #include "Util/CDGBuilder.h"
 #include "Graphs/CallGraph.h"

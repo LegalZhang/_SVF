@@ -2,7 +2,7 @@
 //
 //                     SVF: Static Value-Flow Analysis
 //
-// Copyright (C) <2013-2017>  <Yulei Sui>
+// Copyright (C) <2013-2017>  <>
 //
 
 // This program is free software: you can redistribute it and/or modify
@@ -20,17 +20,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-/*
- * @file: SVFGOPT.cpp
- * @author: yesen
- * @date: 31/03/2014
- * @version: 1.0
- *
- * @section LICENSE
- *
- * @section DESCRIPTION
- *
- */
 
 #include "Util/Options.h"
 #include "Graphs/SVFGOPT.h"

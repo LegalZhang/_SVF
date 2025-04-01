@@ -1,11 +1,6 @@
 //===- VersionedFlowSensitive.cpp -- Versioned flow-sensitive pointer analysis------------//
 
-/*
- * VersionedFlowSensitive.cpp
- *
- *  Created on: Jun 26, 2020
- *      Author: Mohamad Barbar
- */
+
 
 #include "WPA/Andersen.h"
 #include "WPA/VersionedFlowSensitive.h"

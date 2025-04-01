@@ -2,7 +2,7 @@
 //
 //                     SVF: Static Value-Flow Analysis
 //
-// Copyright (C) <2013-2017>  <Yulei Sui>
+// Copyright (C) <2013-2017>  <>
 //
 
 // This program is free software: you can redistribute it and/or modify
@@ -20,12 +20,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-/*
- * AndersenStat.cpp
- *
- *  Created on: Oct 12, 2013
- *      Author: Yulei Sui
- */
+
 
 #include "MemoryModel/PointerAnalysis.h"
 #include "WPA/WPAStat.h"
@@ -149,7 +144,7 @@ void AndersenStat::constraintGraphStat()
 
     ConstraintGraph* consCG = pta->getConstraintGraph();
     if (consCG == nullptr) {
-        /// Jiahao: Must switch to CG or SCD when executing the corresponding command
+        /// Must switch to CG or SCD when executing the corresponding command
         FlowSensitiveSCD* fspta = dynamic_cast<FlowSensitiveSCD*>(pta);
         // FlowSensitiveCG* fspta = dynamic_cast<FlowSensitiveCG*>(pta);
         if (fspta != nullptr && fspta->getFSConsG() != nullptr) {
@@ -331,7 +326,7 @@ void AndersenStat::performStat()
     ConstraintGraph* consCG = pta->getConstraintGraph();
 
     if (consCG == nullptr) {
-        /// Jiahao: Must switch to CG or SCD when executing the corresponding command
+        /// Must switch to CG or SCD when executing the corresponding command
         FlowSensitiveSCD* fspta = dynamic_cast<FlowSensitiveSCD*>(pta);
         // FlowSensitiveCG* fspta = dynamic_cast<FlowSensitiveCG*>(pta);
         if (fspta != nullptr && fspta->getFSConsG() != nullptr) {

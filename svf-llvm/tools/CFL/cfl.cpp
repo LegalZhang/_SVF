@@ -2,7 +2,7 @@
 //
 //                     SVF: Static Value-Flow Analysis
 //
-// Copyright (C) <2013->  <Yulei Sui>
+// Copyright (C) <2013->  <>
 //
 
 // This program is free software: you can redistribute it and/or modify
@@ -23,7 +23,7 @@
 /*
  //  A driver of CFL Reachability Analysis
  //
- // Author: Yulei Sui,
+ // Author: ,
  */
 
 // This file is a driver for Context-Free Language (CFL) Reachability Analysis. The code

@@ -2,7 +2,7 @@
 //
 //                     SVF: Static Value-Flow Analysis
 //
-// Copyright (C) <2013->  <Yulei Sui>
+// Copyright (C) <2013->  <>
 //
 
 // This program is free software: you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  * DoubleFreeChecker.cpp
  *
  *  Created on: Apr 24, 2014
- *      Author: Yulei Sui
+ *      Author:
  */
 
 #include "SABER/DoubleFreeChecker.h"

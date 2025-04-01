@@ -2,7 +2,7 @@
 //
 //                     SVF: Static Value-Flow Analysis
 //
-// Copyright (C) <2013-2017>  <Yulei Sui>
+// Copyright (C) <2013-2017>  <>
 //
 
 // This program is free software: you can redistribute it and/or modify
@@ -21,12 +21,6 @@
 //===----------------------------------------------------------------------===//
 
 
-/*
- * PTACallGraph.cpp
- *
- *  Created on: Nov 7, 2013
- *      Author: Yulei Sui
- */
 
 #include "Graphs/CallGraph.h"
 #include "SVFIR/SVFIR.h"

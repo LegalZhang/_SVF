@@ -2,7 +2,7 @@
 //
 //                     SVF: Static Value-Flow Analysis
 //
-// Copyright (C) <2013-2017>  <Yulei Sui>
+// Copyright (C) <2013-2017>  <>
 //
 
 // This program is free software: you can redistribute it and/or modify
@@ -20,12 +20,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-/*
- * TypeAnalysis.cpp
- *
- *  Created on: 7 Sep. 2018
- *      Author: Yulei Sui
- */
 
 #include "WPA/TypeAnalysis.h"
 #include "Graphs/CHG.h"

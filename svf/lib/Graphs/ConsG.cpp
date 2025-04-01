@@ -2,7 +2,7 @@
 //
 //                     SVF: Static Value-Flow Analysis
 //
-// Copyright (C) <2013-2017>  <Yulei Sui>
+// Copyright (C) <2013-2017>  <>
 //
 
 // This program is free software: you can redistribute it and/or modify
@@ -19,13 +19,6 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 //===----------------------------------------------------------------------===//
-
-/*
- * ConstraintGraph.cpp
- *
- *  Created on: Oct 14, 2013
- *      Author: Yulei Sui
- */
 
 #include "Graphs/ConsG.h"
 #include "Util/Options.h"

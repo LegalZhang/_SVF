@@ -1,11 +1,5 @@
 //===- VersionedFlowSensitiveStat.cpp -- Statistics for VFSPTA -//
 
-/*
- * VersionedFlowSensitiveStat.cpp
- *
- *  Created on: 25/07/2020
- *      Author: mbarbar
- */
 
 #include "Util/SVFUtil.h"
 #include "WPA/WPAStat.h"

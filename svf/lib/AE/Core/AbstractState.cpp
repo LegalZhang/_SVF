@@ -2,7 +2,7 @@
 //
 //                     SVF: Static Value-Flow Analysis
 //
-// Copyright (C) <2013-2022>  <Yulei Sui>
+// Copyright (C) <2013-2022>  <>
 //
 
 // This program is free software: you can redistribute it and/or modify
@@ -23,7 +23,7 @@
  * AbstractExeState.cpp
  *
  *  Created on: Jul 9, 2022
- *      Author: Xiao Cheng, Jiawei Wang
+ *      Author: , Jiawei Wang
  *
  */
 

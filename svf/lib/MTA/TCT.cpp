@@ -2,7 +2,7 @@
 //
 //                     SVF: Static Value-Flow Analysis
 //
-// Copyright (C) <2013->  <Yulei Sui>
+// Copyright (C) <2013->  <>
 //
 
 // This program is free software: you can redistribute it and/or modify
@@ -25,7 +25,7 @@
  * TCT.cpp
  *
  *  Created on: Jun 24, 2015
- *      Author: Yulei Sui, Peng Di
+ *      Author: , Peng Di
  */
 
 #include "Util/Options.h"

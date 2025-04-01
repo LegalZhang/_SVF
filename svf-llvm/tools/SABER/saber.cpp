@@ -2,7 +2,7 @@
 //
 //                     SVF: Static Value-Flow Analysis
 //
-// Copyright (C) <2013-2017>  <Yulei Sui>
+// Copyright (C) <2013-2017>  <>
 //
 
 // This program is free software: you can redistribute it and/or modify
@@ -23,7 +23,7 @@
 /*
  // Saber: Software Bug Check.
  //
- // Author: Yulei Sui,
+ // Author: ,
  */
 
 #include "SVF-LLVM/LLVMUtil.h"

@@ -1,6 +1,3 @@
-//
-// Created by Jiahao Zhang on 18/11/2024.
-//
 
 #include "Graphs/FSConsG.h"
 #include "WPA/Andersen.h"
@@ -14,7 +11,6 @@ using namespace SVF;
  */
 void FlowSensitiveCG::initialize()
 {
-    std::cout << "啦啦啦啦啦啦FS--ANDER啦啦啦啦啦啦" << std::endl;
     resetData();
     /// Build SVFIR
     PointerAnalysis::initialize();
@@ -30,8 +26,6 @@ void FlowSensitiveCG::initialize()
     setGraph(fsconsCG);
     if (Options::SVFG2CG())
         fsconsCG->dump("fsconsg_initial");
-
-    std::cout << "啦啦啦啦啦啦END--FS--ANDER啦啦啦啦啦啦" << std::endl;
 
     /// Create Andersen statistic class
     stat = new AndersenStat(this);

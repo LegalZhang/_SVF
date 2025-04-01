@@ -2,7 +2,7 @@
 //
 //                     SVF: Static Value-Flow Analysis
 //
-// Copyright (C) <2013-2017>  <Yulei Sui>
+// Copyright (C) <2013-2017>  <>
 //
 
 // This program is free software: you can redistribute it and/or modify
@@ -20,12 +20,7 @@
 //
 //===-----------------------------------------------------------------------===//
 
-/*
- * FlowSensitiveStat.cpp
- *
- *  Created on: 27/11/2013
- *      Author: yesen
- */
+
 
 #include "WPA/Andersen.h"
 #include "WPA/WPAStat.h"

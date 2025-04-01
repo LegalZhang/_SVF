@@ -2,7 +2,7 @@
 //
 //                     SVF: Static Value-Flow Analysis
 //
-// Copyright (C) <2013->  <Yulei Sui>
+// Copyright (C) <2013->  <>
 //
 
 // This program is free software: you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 //===----------------------------------------------------------------------===//
 
 //
-// Created by Xiao on 30/12/23.
+// Created by  on 30/12/23.
 //
 #include "MemoryModel/PointerAnalysisImpl.h"
 #include "Graphs/SVFG.h"

@@ -2,7 +2,7 @@
 //
 //                     SVF: Static Value-Flow Analysis
 //
-// Copyright (C) <2013-2017>  <Yulei Sui>
+// Copyright (C) <2013-2017>  <>
 //
 
 // This program is free software: you can redistribute it and/or modify
@@ -19,13 +19,6 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 //===----------------------------------------------------------------------===//
-
-/*
- * CSC.cpp
- *
- *  Created on: 09, Feb, 2019
- *      Author: Yuxiang Lei
- */
 
 #include "WPA/CSC.h"
 
